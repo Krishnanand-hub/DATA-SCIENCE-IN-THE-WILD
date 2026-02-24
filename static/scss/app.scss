@@ -1,0 +1,23 @@
+$primary-c: #1e49de;        // now your primary blue
+$secondary-c: #0f2f8f;          // deeper supporting blue
+$brown: #757763;         // unchanged neutral
+$beige-light: #d0d1cd;   // unchanged neutral
+$beige-lighter: #eff0eb; // unchanged neutral
+
+// Button colour (was yellowish, now a soft blue-tinted neutral)
+$button: #c9d6ff;
+
+
+// Path to Bulma's sass folder
+@use "./bulma/sass" with (
+  $family-primary: '"Nunito", sans-serif',
+  $grey-dark: $brown,
+  $grey-light: $beige-light,
+  $primary: $primary-c,
+  $link: $brown,
+  $control-border-width: 2px,
+  $input-shadow: none
+);
+
+// Import the Google Font
+@import url("https://fonts.googleapis.com/css?family=Nunito:400,700");

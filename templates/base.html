@@ -1,0 +1,117 @@
+{% assets "scss_all" %}
+<link rel="stylesheet" href="{{ ASSET_URL }}">
+{% endassets %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nucleus Modelling</title>
+    <link rel="stylesheet" href="/static/styles/app.css"/>
+    <style>
+    .table {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .navbar-menu {
+            background-color: #fdc04a;
+        }
+    .navbar-burger {
+            display: none;
+        }
+        @media (max-width: 1024px) {
+            .navbar-menu {
+                display: none;
+            }
+            .navbar-menu.is-active {
+                display: block;
+            }
+            .navbar-burger {
+                display: block;
+            }
+            .navbar-menu .navbar-start,
+            .navbar-menu .navbar-end {
+                flex-direction: column;
+            }
+            .navbar-menu .buttons a {
+                display: block;
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+    hr {
+    background-color: #ffffff;
+    border: none;
+    display: block;
+    height: var(--bulma-hr-height);
+    margin: var(--bulma-hr-margin);
+}
+    </style>
+</head>
+<body>
+    <section class="hero is-primary is-fullheight">
+        <nav class="navbar has-shadow is-warning is-light" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="site logo" style="max-height: 80px; border-radius: 12px">
+                </a>
+
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbar-burger">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div id="navbar-burger" class="navbar-menu">
+                <div class="navbar-start">
+                    <div class="buttons">
+                        <a class="button is-warning is-light" href="{{ url_for('index') }}"><strong>Home</strong></a>
+                        <a class="button is-warning is-light" href="{{ url_for('portal.portal') }}"><strong>Portal</strong></a>
+                    </div>
+                </div>
+
+            <div class="navbar-end">
+            </div>
+            </div>
+        </nav>
+
+        <div class="hero-body">
+            <div class="container has-text-centered">
+               {% block content %}
+               {% endblock %}
+            </div>
+        </div>
+
+    <div class="hero-foot">
+        <hr>
+            <div class="container">
+                <div class="tabs is-centered">
+                    <ul>
+                        <li><a>This project was made as part of the CSC8632 module. &copy; 2026 Team 15</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+            if ($navbarBurgers.length > 0) {
+                $navbarBurgers.forEach(el => {
+                    el.addEventListener('click', () => {
+                        const target = el.dataset.target;
+                        const $target = document.getElementById(target);
+                        el.classList.toggle('is-active');
+                        $target.classList.toggle('is-active');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
