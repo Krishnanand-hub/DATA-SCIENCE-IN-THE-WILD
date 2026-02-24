@@ -1,27 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="hero-body">
-            <div class="container has-text-centered">
-                <div class="columns is-vcentered">
-                    <div class="column is-5">
-                        <figure class="image">
-                            <img src="static/images/logo.png" style="border-radius: 36px" alt="Nucleus Modelling logo">
-                        </figure>
-                    </div>
-                    <div class="column is-6 is-offset-1">
-                        <div class="box" style="border-radius: 15px; background-color: transparent; border: 5px solid #291f05;">
-                        <h1 class="title is-2">
-                            Nucleus Modelling
-                        </h1>
-                        <br>
-                        <h2 class="subtitle is-4">
+<div class="section">
+    <div class="container is-flex is-flex-direction-column is-align-items-center is-justify-content-center has-text-centered">
+        <figure class="image" style="max-width: 240px;">
+            <img src="{{ url_for('static', filename='images/logo.png') }}"
+                 style="border-radius: 36px;"
+                 alt="Nucleus Modelling logo">
+        </figure>
 
-                        </h2>
-                        </div>
-                    </div>
+        <div class="columns is-centered is-vcentered" style="margin-top: 2rem;">
+            <div class="column is-6">
+                <div class="box"
+                     style="border-radius: 15px; background-color: transparent; border: 5px solid #ffffff;">
+                    <h1 class="title is-2">Nucleus Modelling</h1>
+                    <h2 >About</h2>
+                    <p>
+                        lorum ipsum
+                    </p>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
 {% endblock %}

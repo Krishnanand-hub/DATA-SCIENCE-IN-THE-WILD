@@ -1,24 +1,11 @@
 from flask import Flask, render_template
 from dotenv import load_dotenv
 import os
-from flask_assets import Environment, Bundle
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__, static_url_path='/static')
-app.config['ASSETS_DEBUG'] = True
-app.config['ASSETS_AUTO_BUILD'] = True
-
-assets = Environment(app)
-
-scss = Bundle(
-    'scss/app.scss',
-    filters='libsass',
-    output='styles/app.css'
-)
-
-assets.register('scss_all', scss)
 
 
 """

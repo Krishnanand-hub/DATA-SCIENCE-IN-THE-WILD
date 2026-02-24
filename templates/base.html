@@ -1,117 +1,95 @@
-{% assets "scss_all" %}
-<link rel="stylesheet" href="{{ ASSET_URL }}">
-{% endassets %}
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
-
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nucleus Modelling</title>
-    <link rel="stylesheet" href="/static/styles/app.css"/>
-    <style>
-    .table {
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .navbar-menu {
-            background-color: #fdc04a;
-        }
-    .navbar-burger {
-            display: none;
-        }
-        @media (max-width: 1024px) {
-            .navbar-menu {
-                display: none;
-            }
-            .navbar-menu.is-active {
-                display: block;
-            }
-            .navbar-burger {
-                display: block;
-            }
-            .navbar-menu .navbar-start,
-            .navbar-menu .navbar-end {
-                flex-direction: column;
-            }
-            .navbar-menu .buttons a {
-                display: block;
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
-        }
-    hr {
-    background-color: #ffffff;
-    border: none;
-    display: block;
-    height: var(--bulma-hr-height);
-    margin: var(--bulma-hr-margin);
-}
-    </style>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/app.css') }}">
 </head>
+
 <body>
-    <section class="hero is-primary is-fullheight">
-        <nav class="navbar has-shadow is-warning is-light" role="navigation" aria-label="main navigation">
+    <section class="hero is-fullheight">
+        <nav class="navbar has-shadow" role="navigation" aria-label="main navigation">
             <div class="navbar-brand">
-                <a class="navbar-item" href="{{ url_for('index') }}">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="site logo" style="max-height: 80px; border-radius: 12px">
+
+                <!-- Centered logo inside navbar-brand -->
+                <a class="navbar-item navbar-logo" href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}"
+                         alt="Nucleus Modelling logo">
                 </a>
 
-                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbar-burger">
-                    <span aria-hidden="true"></span>
+                <!-- Burger menu -->
+                <a role="button"
+                   class="navbar-burger"
+                   aria-label="menu"
+                   aria-expanded="false"
+                   data-target="navbarMenuHero">
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>
                 </a>
             </div>
 
-            <div id="navbar-burger" class="navbar-menu">
-                <div class="navbar-start">
-                    <div class="buttons">
-                        <a class="button is-warning is-light" href="{{ url_for('index') }}"><strong>Home</strong></a>
-                        <a class="button is-warning is-light" href="{{ url_for('portal.portal') }}"><strong>Portal</strong></a>
+            <div id="navbarMenuHero" class="navbar-menu is-active">
+                <div class="navbar-start is-flex is-justify-content-center is-align-items-center" style="width: 100%;">
+                    <div class="navbar-item">
+                        <div class="buttons is-flex is-align-items-center">
+                            <a class="btn-outline" href="{{ url_for('index') }}">Home</a>
+                            <a class="btn-primary" href="{{ url_for('portal.portal') }}">Portal</a>
+                        </div>
                     </div>
                 </div>
-
-            <div class="navbar-end">
-            </div>
             </div>
         </nav>
 
+
         <div class="hero-body">
-            <div class="container has-text-centered">
-               {% block content %}
-               {% endblock %}
+            <div class="container has-text-centered is-flex is-justify-content-center">
+                <div>
+                    {% block content %}
+                    {% endblock %}
+                </div>
             </div>
         </div>
 
-    <div class="hero-foot">
-        <hr>
+
+
+        <div class="hero-foot">
+            <hr>
             <div class="container">
                 <div class="tabs is-centered">
                     <ul>
-                        <li><a>This project was made as part of the CSC8632 module. &copy; 2026 Team 15</a></li>
+                        <li class="footer-text">
+                            This project was made as part of the CSC8632 module. &copy; 2026 Team 15
+                        </li>
                     </ul>
                 </div>
             </div>
         </div>
+
     </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
-            if ($navbarBurgers.length > 0) {
-                $navbarBurgers.forEach(el => {
-                    el.addEventListener('click', () => {
-                        const target = el.dataset.target;
-                        const $target = document.getElementById(target);
+            const navbarBurgers = document.querySelectorAll('.navbar-burger');
+
+            navbarBurgers.forEach(el => {
+                el.addEventListener('click', () => {
+                    const target = el.dataset.target;
+                    const targetEl = document.getElementById(target);
+
+                    if (targetEl) {
                         el.classList.toggle('is-active');
-                        $target.classList.toggle('is-active');
-                    });
+                        targetEl.classList.toggle('is-active');
+                    }
                 });
-            }
+            });
         });
     </script>
+
 </body>
 </html>
