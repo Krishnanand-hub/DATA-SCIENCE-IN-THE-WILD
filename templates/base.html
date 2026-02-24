@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nucleus Modelling</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/app.css') }}">
+</head>
+
+<body>
+    <section class="hero is-fullheight">
+        <nav class="navbar has-shadow" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+
+                <!-- Centered logo inside navbar-brand -->
+                <a class="navbar-item navbar-logo" href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}"
+                         alt="Nucleus Modelling logo">
+                </a>
+
+                <!-- Burger menu -->
+                <a role="button"
+                   class="navbar-burger"
+                   aria-label="menu"
+                   aria-expanded="false"
+                   data-target="navbarMenuHero">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div id="navbarMenuHero" class="navbar-menu is-active">
+                <div class="navbar-start is-flex is-justify-content-center is-align-items-center" style="width: 100%;">
+                    <div class="navbar-item">
+                        <div class="buttons is-flex is-align-items-center">
+                            <a class="btn-outline" href="{{ url_for('index') }}">Home</a>
+                            <a class="btn-primary" href="{{ url_for('portal.portal') }}">Portal</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+
+        <div class="hero-body">
+            <div class="container has-text-centered is-flex is-justify-content-center">
+                <div>
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="hero-foot">
+            <hr>
+            <div class="container">
+                <div class="tabs is-centered">
+                    <ul>
+                        <li class="footer-text">
+                            This project was made as part of the CSC8632 module. &copy; 2026 Team 15
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navbarBurgers = document.querySelectorAll('.navbar-burger');
+
+            navbarBurgers.forEach(el => {
+                el.addEventListener('click', () => {
+                    const target = el.dataset.target;
+                    const targetEl = document.getElementById(target);
+
+                    if (targetEl) {
+                        el.classList.toggle('is-active');
+                        targetEl.classList.toggle('is-active');
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
