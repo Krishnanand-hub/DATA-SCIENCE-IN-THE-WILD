@@ -36,6 +36,18 @@ def link_district_region(FORCE_PROCESSING=False):
 
     return df
 
+def load_imd(FORCE_PROCESSING=False):
+    if FORCE_PROCESSING or not os.path.exists("./data/lsoa_district_imd_map.csv"):
+        #load
+        df = pandas.read_csv("File_1_IoD2025 Index of Multiple Deprivation.csv")
+        #extract/pre-process
+        df = df[["LSOA code (2021)", "Local Authority District code (2024)", "Index of Multiple Deprivation (IMD) Decile (where 1 is most deprived 10% of LSOAs)"]]
+        #simplify and stash
+        df.to_csv("./data/lsoa_district_imd_map.csv", index=False)
+    else:
+        df= pandas.read_csv("./data/lsoa_district_imd_map.csv")
+    return df
+
 if __name__ == "__main__":
     data = link_postcode_district()
     print(data.head())
