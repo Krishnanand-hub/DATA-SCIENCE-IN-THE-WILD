@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 *.csv filter=lfs diff=lfs merge=lfs -text
+=======
+data/** filter=lfs diff=lfs merge=lfs -text
+>>>>>>> 9282d0d7e40c6534cd2a46e86d1b8670fea317af

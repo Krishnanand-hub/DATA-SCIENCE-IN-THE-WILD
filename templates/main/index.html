@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="section">
+    <div class="container is-flex is-flex-direction-column is-align-items-center is-justify-content-center has-text-centered">
+        <figure class="image" style="max-width: 240px;">
+            <img src="{{ url_for('static', filename='images/logo.png') }}"
+                 style="border-radius: 36px;"
+                 alt="Nucleus Modelling logo">
+        </figure>
+
+        <div class="columns is-centered is-vcentered" style="margin-top: 2rem;">
+            <div class="column is-6">
+                <div class="box"
+                     style="border-radius: 15px; background-color: transparent; border: 5px solid #ffffff;">
+                    <h1 class="title is-2">Nucleus Modelling</h1>
+                    <h2 >About</h2>
+                    <p>
+                        lorum ipsum
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
