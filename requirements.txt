@@ -4,3 +4,6 @@ pandas
 numpy
 matplotlib
 openpyxl
+geopandas
+seaborn
+folium
