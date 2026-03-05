@@ -1,0 +1,874 @@
+/* ==============================
+   CSS Variables & Tokens
+   ============================== */
+:root {
+    --bg-dark: #0a0e1a;
+    --bg-panel: rgba(15, 23, 42, 0.75);
+    --bg-panel-hover: rgba(20, 30, 55, 0.85);
+    --bg-card: rgba(30, 41, 73, 0.6);
+    --border-glass: rgba(100, 120, 180, 0.15);
+    --border-glow: rgba(99, 102, 241, 0.3);
+
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-heading: #f1f5f9;
+
+    --accent-blue: #6366f1;
+    --accent-purple: #8b5cf6;
+    --accent-cyan: #06b6d4;
+    --accent-green: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-red: #ef4444;
+
+    --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --gradient-success: linear-gradient(135deg, #10b981, #06b6d4);
+    --gradient-danger: linear-gradient(135deg, #ef4444, #f59e0b);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ==============================
+   Reset & Base
+   ============================== */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    background-image:
+        radial-gradient(at 20% 20%, rgba(99, 102, 241, 0.08) 0, transparent 50%),
+        radial-gradient(at 80% 80%, rgba(139, 92, 246, 0.06) 0, transparent 50%),
+        radial-gradient(at 50% 0%, rgba(6, 182, 212, 0.05) 0, transparent 50%);
+}
+
+/* ==============================
+   Header
+   ============================== */
+.dashboard-header {
+    background: rgba(10, 14, 26, 0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-glass);
+    padding: 20px 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.dashboard-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.title-icon {
+    font-size: 1.4rem;
+    -webkit-text-fill-color: initial;
+}
+
+.dashboard-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 2px;
+    font-weight: 400;
+}
+
+.header-right {
+    display: flex;
+    gap: 24px;
+}
+
+.header-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+}
+
+/* ==============================
+   Main Layout
+   ============================== */
+.dashboard-main {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+/* ==============================
+   Panels (Glassmorphism)
+   ============================== */
+.panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.panel:hover {
+    box-shadow: var(--shadow-glow);
+    border-color: var(--border-glow);
+}
+
+.panel-full {
+    width: 100%;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.panel-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.panel-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* ==============================
+   Risk Score Cards
+   ============================== */
+.risk-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+}
+
+.risk-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    border: 1px solid var(--border-glass);
+    transition: all 0.3s ease;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+}
+
+.risk-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.risk-card.risk-low::before {
+    background: var(--gradient-success);
+}
+
+.risk-card.risk-medium::before {
+    background: linear-gradient(135deg, #f59e0b, #eab308);
+}
+
+.risk-card.risk-high::before {
+    background: var(--gradient-danger);
+}
+
+.risk-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-glow);
+}
+
+.risk-card-rank {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.risk-card-region {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.risk-card-score {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.risk-card.risk-low .risk-card-score {
+    color: var(--accent-green);
+}
+
+.risk-card.risk-medium .risk-card-score {
+    color: var(--accent-amber);
+}
+
+.risk-card.risk-high .risk-card-score {
+    color: var(--accent-red);
+}
+
+.risk-card-detail {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.risk-card-price {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-glass);
+}
+
+/* ==============================
+   Charts
+   ============================== */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 320px;
+}
+
+.chart-container-sm {
+    height: 260px;
+}
+
+.chart-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.select-control {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-family: var(--font);
+    font-size: 0.8rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.select-control:focus {
+    border-color: var(--accent-blue);
+}
+
+/* ==============================
+   Validation Metrics
+   ============================== */
+.validation-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.metric-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+    border: 1px solid var(--border-glass);
+}
+
+.metric-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.metric-value.positive {
+    color: var(--accent-green);
+}
+
+.metric-value.neutral {
+    color: var(--accent-amber);
+}
+
+.metric-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ==============================
+   Data Table
+   ============================== */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-glass);
+    white-space: nowrap;
+}
+
+.data-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(100, 120, 180, 0.08);
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.data-table tr:hover td {
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.data-table .risk-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.risk-badge.low {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+}
+
+.risk-badge.medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-amber);
+}
+
+.risk-badge.high {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--accent-red);
+}
+
+/* ==============================
+   Formula Panel
+   ============================== */
+.formula-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.formula-box {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    border: 1px solid var(--border-glass);
+}
+
+.formula-equation {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-glass);
+    font-family: 'Inter', monospace;
+}
+
+.formula-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.formula-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* ==============================
+   ECL Calculator
+   ============================== */
+.calculator-panel {
+    border-color: rgba(6, 182, 212, 0.2);
+    background: rgba(15, 23, 42, 0.85);
+}
+
+.calc-layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 28px;
+    align-items: start;
+}
+
+.calc-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.calc-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.calc-input-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+}
+
+.calc-input {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-family: var(--font);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.calc-input:focus {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+.calc-input::placeholder {
+    color: var(--text-muted);
+}
+
+.calc-region-badge {
+    font-size: 0.8rem;
+    color: var(--accent-cyan);
+    min-height: 20px;
+    font-weight: 500;
+}
+
+.calc-ltv-display {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+    border: 1px solid var(--border-glass);
+}
+
+.calc-ltv-display span {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.calc-button {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 20px;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    letter-spacing: 0.3px;
+}
+
+.calc-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+.calc-button:active {
+    transform: translateY(0);
+}
+
+/* Calculator Results */
+.calc-results {
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+}
+
+.calc-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 280px;
+    color: var(--text-muted);
+    text-align: center;
+    gap: 12px;
+}
+
+.calc-placeholder-icon {
+    font-size: 2.5rem;
+    opacity: 0.5;
+}
+
+.calc-placeholder p {
+    font-size: 0.85rem;
+    max-width: 280px;
+}
+
+.ecl-result-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.ecl-big-number {
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: var(--gradient-danger);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.ecl-big-number.ecl-low {
+    background: var(--gradient-success);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.ecl-big-number.ecl-medium {
+    background: linear-gradient(135deg, #f59e0b, #eab308);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.ecl-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.ecl-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.ecl-factor {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+    border: 1px solid var(--border-glass);
+    transition: transform 0.2s;
+}
+
+.ecl-factor:hover {
+    transform: translateY(-2px);
+}
+
+.ecl-factor-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.ecl-factor-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.ecl-factor-desc {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.ecl-gauge {
+    margin-top: 16px;
+}
+
+.ecl-gauge-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.ecl-gauge-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(100, 120, 180, 0.15);
+    overflow: hidden;
+    position: relative;
+}
+
+.ecl-gauge-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.ecl-details {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-glass);
+}
+
+.ecl-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 0.8rem;
+}
+
+.ecl-detail-row .label {
+    color: var(--text-muted);
+}
+
+.ecl-detail-row .value {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.ecl-formula-display {
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.15);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+    font-family: 'Inter', monospace;
+    font-size: 0.82rem;
+    color: var(--accent-cyan);
+    margin-top: 14px;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .calc-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==============================
+   Footer
+   ============================== */
+.dashboard-footer {
+    text-align: center;
+    padding: 24px 32px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    border-top: 1px solid var(--border-glass);
+    margin-top: 20px;
+}
+
+/* ==============================
+   Responsive
+   ============================== */
+@media (max-width: 1024px) {
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .formula-content {
+        grid-template-columns: 1fr;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-main {
+        padding: 16px;
+    }
+
+    .dashboard-header {
+        padding: 16px;
+    }
+
+    .risk-cards {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+
+/* ==============================
+   Animations
+   ============================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.panel {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.risk-card {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.risk-card:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.risk-card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.risk-card:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.risk-card:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.risk-card:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.risk-card:nth-child(6) {
+    animation-delay: 0.3s;
+}
+
+.risk-card:nth-child(7) {
+    animation-delay: 0.35s;
+}
+
+.risk-card:nth-child(8) {
+    animation-delay: 0.4s;
+}
+
+.risk-card:nth-child(9) {
+    animation-delay: 0.45s;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(100, 120, 180, 0.3);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 120, 180, 0.5);
+}

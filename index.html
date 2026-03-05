@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Lending Risk Dashboard</title>
+    <meta name="description"
+        content="Interactive analysis of UK lending risk using house prices, repossessions, and deprivation data">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="dashboard-title">
+                    <span class="title-icon">📊</span>
+                    UK Lending Risk Dashboard
+                </h1>
+                <p class="dashboard-subtitle">Capital Deployment Optimisation • Opportunities & Risks</p>
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="stat-label">Backtest Accuracy</span>
+                    <span class="stat-value" id="backtest-accuracy">—</span>
+                </div>
+                <div class="header-stat">
+                    <span class="stat-label">Regions Analysed</span>
+                    <span class="stat-value" id="region-count">—</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <!-- Section 1: Risk Score Cards -->
+        <section class="panel panel-full" id="risk-overview">
+            <div class="panel-header">
+                <h2>Regional Risk Scores</h2>
+                <p class="panel-desc">Composite risk = 40% Repo Rate + 30% HPI Momentum + 30% Deprivation</p>
+            </div>
+            <div class="risk-cards" id="risk-cards-container">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ECL Postcode Calculator -->
+        <section class="panel panel-full calculator-panel" id="ecl-calculator">
+            <div class="panel-header">
+                <h2>🧮 Expected Credit Loss Calculator</h2>
+                <p class="panel-desc">ECL = PD × EAD × LGD — Enter a postcode to estimate lending risk</p>
+            </div>
+            <div class="calc-layout">
+                <!-- Input Side -->
+                <div class="calc-inputs">
+                    <div class="calc-input-group">
+                        <label for="calc-postcode">Postcode</label>
+                        <input type="text" id="calc-postcode" class="calc-input"
+                            placeholder="e.g. M1 1AA, LS1 1UR, SW1A 1AA" autocomplete="off">
+                        <div class="calc-region-badge" id="calc-region-badge"></div>
+                    </div>
+                    <div class="calc-input-group">
+                        <label for="calc-property-value">Property Value (£)</label>
+                        <input type="number" id="calc-property-value" class="calc-input" placeholder="250000"
+                            value="250000" min="10000" step="5000">
+                    </div>
+                    <div class="calc-input-group">
+                        <label for="calc-loan-amount">Loan Amount / EAD (£)</label>
+                        <input type="number" id="calc-loan-amount" class="calc-input" placeholder="200000"
+                            value="200000" min="5000" step="5000">
+                    </div>
+                    <div class="calc-input-group">
+                        <label for="calc-loan-term">Loan Term (years)</label>
+                        <input type="number" id="calc-loan-term" class="calc-input" placeholder="25" value="25" min="1"
+                            max="40">
+                    </div>
+                    <div class="calc-ltv-display" id="calc-ltv-display">
+                        LTV: <span id="calc-ltv-value">80.0%</span>
+                    </div>
+                    <button id="calc-submit" class="calc-button" onclick="calculateECL()">Calculate ECL</button>
+                </div>
+
+                <!-- Results Side -->
+                <div class="calc-results" id="calc-results">
+                    <div class="calc-placeholder">
+                        <span class="calc-placeholder-icon">📍</span>
+                        <p>Enter a UK postcode and loan details to calculate the Expected Credit Loss</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Two-column charts -->
+        <div class="chart-grid">
+            <!-- House Price Trends -->
+            <section class="panel" id="price-panel">
+                <div class="panel-header">
+                    <h2>House Price Trends</h2>
+                    <div class="chart-controls">
+                        <select id="price-region-select" class="select-control">
+                            <option value="all">All Regions</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="price-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Repossession Trends -->
+            <section class="panel" id="repo-panel">
+                <div class="panel-header">
+                    <h2>Repossession Trends</h2>
+                    <div class="chart-controls">
+                        <select id="repo-region-select" class="select-control">
+                            <option value="all">All Regions</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="repo-chart"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Section 3: Risk Model & Capital Allocation -->
+        <div class="chart-grid">
+            <!-- Risk Model Validation -->
+            <section class="panel" id="validation-panel">
+                <div class="panel-header">
+                    <h2>Model Validation — Backtest</h2>
+                    <p class="panel-desc">Train 2016–2022 → Test 2023–2025</p>
+                </div>
+                <div class="validation-metrics" id="validation-metrics">
+                    <!-- Dynamically populated -->
+                </div>
+                <div class="chart-container chart-container-sm">
+                    <canvas id="validation-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Capital Allocation -->
+            <section class="panel" id="capital-panel">
+                <div class="panel-header">
+                    <h2>Optimal Capital Allocation</h2>
+                    <p class="panel-desc">Based on opportunity score (1 − risk)</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="capital-chart"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Section 4: Risk Factor Breakdown -->
+        <section class="panel panel-full" id="factor-panel">
+            <div class="panel-header">
+                <h2>Risk Factor Breakdown</h2>
+                <p class="panel-desc">Normalised contribution of each factor to the composite risk score</p>
+            </div>
+            <div class="chart-container">
+                <canvas id="factor-chart"></canvas>
+            </div>
+        </section>
+
+        <!-- Section 5: Data Table -->
+        <section class="panel panel-full" id="table-panel">
+            <div class="panel-header">
+                <h2>Regional Summary Table</h2>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Region</th>
+                            <th>Risk Score</th>
+                            <th>Avg Monthly Repos</th>
+                            <th>HPI Trend</th>
+                            <th>Deprivation</th>
+                            <th>Latest Price</th>
+                            <th>Capital %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 6: Formula -->
+        <section class="panel panel-full" id="formula-panel">
+            <div class="panel-header">
+                <h2>The Model</h2>
+            </div>
+            <div class="formula-content">
+                <div class="formula-box">
+                    <div class="formula-equation">
+                        Risk Score = 0.4 × R<sub>repos</sub> + 0.3 × R<sub>hpi</sub> + 0.3 × R<sub>deprivation</sub>
+                    </div>
+                    <div class="formula-details">
+                        <div class="formula-item">
+                            <span class="formula-dot" style="background: #ef4444;"></span>
+                            <strong>R<sub>repos</sub></strong> — Normalised repossession rate (higher repos = higher
+                            risk)
+                        </div>
+                        <div class="formula-item">
+                            <span class="formula-dot" style="background: #f59e0b;"></span>
+                            <strong>R<sub>hpi</sub></strong> — Inverted HPI momentum (falling prices = higher risk)
+                        </div>
+                        <div class="formula-item">
+                            <span class="formula-dot" style="background: #8b5cf6;"></span>
+                            <strong>R<sub>deprivation</sub></strong> — IMD deprivation score (higher deprivation =
+                            higher risk)
+                        </div>
+                    </div>
+                </div>
+                <div class="formula-box">
+                    <div class="formula-equation">
+                        Capital Allocation ∝ (1 − Risk Score) / Σ(1 − Risk Scores)
+                    </div>
+                    <div class="formula-details">
+                        <div class="formula-item">
+                            <span class="formula-dot" style="background: #10b981;"></span>
+                            <strong>Expected Return</strong> — Regions with lower risk receive proportionally more
+                            capital
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="dashboard-footer">
+        <p>Data sources: HM Land Registry (UK HPI), Ministry of Housing (IoD 2025) • Generated <span
+                id="gen-date">—</span></p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
