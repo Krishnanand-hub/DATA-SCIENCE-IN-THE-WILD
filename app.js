@@ -60,6 +60,7 @@ function renderAll() {
     renderValidation();
     renderCapitalChart();
     renderFactorChart();
+    renderDecompositionChart();
     renderTable();
     setupControls();
 }
@@ -73,8 +74,42 @@ function renderHeader() {
         dashboardData.metadata.scoring_regions.length;
 
     const genDate = new Date(dashboardData.metadata.generated_at);
-    document.getElementById('gen-date').textContent =
-        genDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const now = new Date();
+    const daysAgo = Math.floor((now - genDate) / (1000 * 60 * 60 * 24));
+
+    let dateStr;
+    if (daysAgo === 0) {
+        const hoursAgo = Math.floor((now - genDate) / (1000 * 60 * 60));
+        dateStr = hoursAgo === 0 ? 'Updated now' : `Updated ${hoursAgo}h ago`;
+    } else {
+        dateStr = `Updated ${daysAgo}d ago`;
+    }
+
+    document.getElementById('gen-date').textContent = dateStr;
+}
+
+// Helper: Calculate 12-month trend for a region
+function computeRegionTrend(region) {
+    const repoTs = dashboardData.time_series.repos[region] || [];
+    const priceTs = dashboardData.time_series.prices[region] || [];
+
+    // Repo trend: compare recent 3 months to prior 3 months
+    let repoTrend = 0;
+    if (repoTs.length > 6) {
+        const recent = repoTs.slice(-3).reduce((sum, d) => sum + (d.volume || 0), 0) / 3;
+        const prior = repoTs.slice(-6, -3).reduce((sum, d) => sum + (d.volume || 0), 0) / 3;
+        repoTrend = prior > 0 ? ((recent - prior) / prior) * 100 : 0;
+    }
+
+    // HPI trend: 12-month price change
+    let hpiTrend = 0;
+    if (priceTs.length > 12) {
+        const recent = priceTs[priceTs.length - 1].price;
+        const yearAgo = priceTs[priceTs.length - 12].price;
+        hpiTrend = yearAgo > 0 ? ((recent - yearAgo) / yearAgo) * 100 : 0;
+    }
+
+    return { repos: repoTrend, hpi: hpiTrend };
 }
 
 // ─── Risk Cards ───
@@ -89,14 +124,29 @@ function renderRiskCards() {
         const riskClass = score > 0.6 ? 'risk-high' : score > 0.35 ? 'risk-medium' : 'risk-low';
         const price = d.latest_price ? `£${Math.round(d.latest_price).toLocaleString()}` : '—';
 
+        // Get trend indicators
+        const trend = computeRegionTrend(region);
+        const repoArrow = trend.repos > 1 ? '↑' : trend.repos < -1 ? '↓' : '→';
+        const repoArrowClass = trend.repos > 1 ? 'trend-up' : trend.repos < -1 ? 'trend-down' : 'trend-stable';
+        const hpiArrow = trend.hpi > 1 ? '↑' : trend.hpi < -1 ? '↓' : '→';
+        const hpiArrowClass = trend.hpi > 1 ? 'trend-up' : trend.hpi < -1 ? 'trend-down' : 'trend-stable';
+
         return `
             <div class="risk-card ${riskClass}">
+                <div class="risk-card-timestamp">Data: <span class="timestamp-dot"></span></div>
                 <div class="risk-card-rank">#${d.risk_rank} Risk</div>
                 <div class="risk-card-region">${region}</div>
                 <div class="risk-card-score">${(score * 100).toFixed(0)}</div>
                 <div class="risk-card-detail">
-                    Repos: ${d.avg_repos_all.toFixed(0)}/mo •
-                    HPI: ${d.recent_hpi_trend > 0 ? '+' : ''}${d.recent_hpi_trend.toFixed(1)}%
+                    <span class="metric-item">
+                        Repos: ${d.avg_repos_all.toFixed(0)}/mo
+                        <span class="trend-arrow ${repoArrowClass}">${repoArrow}</span>
+                    </span>
+                    •
+                    <span class="metric-item">
+                        HPI: ${d.recent_hpi_trend > 0 ? '+' : ''}${d.recent_hpi_trend.toFixed(1)}%
+                        <span class="trend-arrow ${hpiArrowClass}">${hpiArrow}</span>
+                    </span>
                 </div>
                 <div class="risk-card-price">Avg Price: ${price}</div>
             </div>
@@ -518,6 +568,109 @@ function renderFactorChart() {
                     max: 100,
                 }
             }
+        }
+    });
+}
+
+// ─── Risk Decomposition ───
+function renderDecompositionChart() {
+    const ctx = document.getElementById('decomp-chart').getContext('2d');
+    if (charts.decomp) charts.decomp.destroy();
+
+    const scores = dashboardData.risk_scores;
+    const regions = Object.keys(scores).sort((a, b) => scores[a].risk_rank - scores[b].risk_rank);
+
+    // Prepare decomposition data: for each region, show the 3 factors
+    const reposData = regions.map(r => (scores[r].norm_repos * 0.4 * 100).toFixed(1));
+    const hpiData = regions.map(r => (scores[r].norm_hpi_risk * 0.3 * 100).toFixed(1));
+    const depData = regions.map(r => (scores[r].norm_deprivation * 0.3 * 100).toFixed(1));
+
+    charts.decomp = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: regions.map(r => r.substring(0, 10)), // Short region names
+            datasets: [
+                {
+                    label: 'Repos (40%)',
+                    data: reposData,
+                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                    borderColor: '#ef4444',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'HPI Risk (30%)',
+                    data: hpiData,
+                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                    borderColor: '#f59e0b',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'Deprivation (30%)',
+                    data: depData,
+                    backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                    borderColor: '#8b5cf6',
+                    borderWidth: 1,
+                },
+            ]
+        },
+        options: {
+            indexAxis: 'y', // Horizontal bars for better readability
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 10, padding: 12, font: { size: 10 } }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    borderColor: 'rgba(100, 120, 180, 0.3)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.x.toFixed(1)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: { color: 'rgba(100, 120, 180, 0.08)' },
+                },
+                y: {
+                    stacked: true,
+                    grid: { display: false },
+                    ticks: { font: { size: 9 } }
+                }
+            }
+        }
+    });
+
+    // Add click to show detail view
+    ['decomp-detail-view'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerHTML = `
+                <div class="decomp-detail-content">
+                    <div class="decomp-detail-title">Factor Contributions</div>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">
+                        Click the chart bars to see detailed breakdown for a specific region
+                    </p>
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-glass);">
+                        <div class="decomp-factor-item">
+                            <span class="factor-color" style="background: #ef4444;"></span>
+                            <span>Repossessions drive risk increase</span>
+                        </div>
+                        <div class="decomp-factor-item">
+                            <span class="factor-color" style="background: #f59e0b;"></span>
+                            <span>HPI momentum affects recovery value</span>
+                        </div>
+                        <div class="decomp-factor-item">
+                            <span class="factor-color" style="background: #8b5cf6;"></span>
+                            <span>Deprivation indicates payment difficulty</span>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
     });
 }

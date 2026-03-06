@@ -293,9 +293,145 @@ body {
     border-top: 1px solid var(--border-glass);
 }
 
-/* ==============================
-   Charts
-   ============================== */
+/* Trend indicators */
+.trend-arrow {
+    font-weight: 700;
+    margin-left: 4px;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+
+.trend-arrow.trend-up {
+    color: var(--accent-green);
+}
+
+.trend-arrow.trend-down {
+    color: var(--accent-red);
+}
+
+.trend-arrow.trend-stable {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.metric-item {
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Timestamp badge */
+.risk-card-timestamp {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.timestamp-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    opacity: 0.7;
+}
+
+/* Risk card background gradients */
+.risk-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 41, 73, 0.4) 100%);
+}
+
+.risk-card.risk-low {
+    background: linear-gradient(135deg, rgba(30, 41, 73, 0.7) 0%, rgba(16, 185, 129, 0.05) 100%);
+}
+
+.risk-card.risk-low .timestamp-dot {
+    background: var(--accent-green);
+    opacity: 0.8;
+}
+
+.risk-card.risk-medium {
+    background: linear-gradient(135deg, rgba(30, 41, 73, 0.7) 0%, rgba(245, 158, 11, 0.05) 100%);
+}
+
+.risk-card.risk-medium .timestamp-dot {
+    background: var(--accent-amber);
+    opacity: 0.7;
+}
+
+.risk-card.risk-high {
+    background: linear-gradient(135deg, rgba(30, 41, 73, 0.7) 0%, rgba(239, 68, 68, 0.05) 100%);
+}
+
+.risk-card.risk-high .timestamp-dot {
+    background: var(--accent-red);
+    opacity: 0.8;
+}
+
+/* Decomposition Panel */
+.decomp-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.decomp-detail-view {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.decomp-placeholder {
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 20px;
+}
+
+.decomp-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.decomp-detail-title {
+    font-weight: 600;
+    color: var(--text-heading);
+    font-size: 0.9rem;
+}
+
+.decomp-factor-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    padding: 8px 0;
+}
+
+.factor-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+    .decomp-container {
+        grid-template-columns: 1fr;
+    }
+}
 .chart-container {
     position: relative;
     width: 100%;
