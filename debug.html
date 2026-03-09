@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Debug</title>
+</head>
+<body style="font-family: monospace; padding: 20px; color: #333;">
+    <h1>Dashboard Data Debug</h1>
+    <div id="results"></div>
+    <script>
+        async function test() {
+            const results = document.getElementById('results');
+            
+            try {
+                results.innerHTML += '<p>Testing fetch of dashboard_data.json...</p>';
+                
+                const urls = [
+                    'dashboard_data.json',
+                    '/dashboard_data.json',
+                    './dashboard_data.json',
+                ];
+                
+                for (const url of urls) {
+                    try {
+                        const res = await fetch(url);
+                        results.innerHTML += `<p style="color: ${res.ok ? 'green' : 'red'}">
+                            URL: ${url} - Status: ${res.status} ${res.statusText}
+                        </p>`;
+                        
+                        if (res.ok) {
+                            const data = await res.json();
+                            results.innerHTML += `<p style="color: green">✓ Valid JSON loaded! Regions: ${data.metadata.scoring_regions.length}</p>`;
+                        }
+                    } catch (e) {
+                        results.innerHTML += `<p style="color: red">URL: ${url} - Error: ${e.message}</p>`;
+                    }
+                }
+                
+                // Check file system
+                results.innerHTML += '<hr><p><strong>Instructions to fix:</strong></p>';
+                results.innerHTML += '<ol>';
+                results.innerHTML += '<li>Make sure you\'re in the Dashboard directory</li>';
+                results.innerHTML += '<li>Run: <code>python3 preprocess.py</code></li>';
+                results.innerHTML += '<li>Run: <code>python3 -m http.server 8000</code></li>';
+                results.innerHTML += '<li>Open: <code>http://localhost:8000</code></li>';
+                results.innerHTML += '</ol>';
+                
+            } catch (err) {
+                results.innerHTML += `<p style="color: red">Error: ${err.message}</p>`;
+            }
+        }
+        
+        test();
+    </script>
+</body>
+</html>

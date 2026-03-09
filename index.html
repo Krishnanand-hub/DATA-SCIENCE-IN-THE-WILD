@@ -23,17 +23,9 @@
                     <span class="title-icon">📊</span>
                     UK Lending Risk Dashboard
                 </h1>
-                <p class="dashboard-subtitle">Capital Deployment Optimisation • Opportunities & Risks</p>
             </div>
             <div class="header-right">
-                <div class="header-stat">
-                    <span class="stat-label">Backtest Accuracy</span>
-                    <span class="stat-value" id="backtest-accuracy">—</span>
-                </div>
-                <div class="header-stat">
-                    <span class="stat-label">Regions Analysed</span>
-                    <span class="stat-value" id="region-count">—</span>
-                </div>
+                <img src="image.png" alt="Group Logo" class="header-logo">
             </div>
         </div>
     </header>
@@ -98,18 +90,13 @@
 
         <!-- Section 2: Two-column charts -->
         <div class="chart-grid">
-            <!-- House Price Trends -->
-            <section class="panel" id="price-panel">
+            <!-- Urban/Rural Visual -->
+            <section class="panel" id="urban-rural-panel">
                 <div class="panel-header">
-                    <h2>House Price Trends</h2>
-                    <div class="chart-controls">
-                        <select id="price-region-select" class="select-control">
-                            <option value="all">All Regions</option>
-                        </select>
-                    </div>
+                    <h2>Urban/Rural Visual</h2>
                 </div>
                 <div class="chart-container">
-                    <canvas id="price-chart"></canvas>
+                    <!-- Ready for new visual -->
                 </div>
             </section>
 
@@ -131,28 +118,23 @@
 
         <!-- Section 3: Risk Model & Capital Allocation -->
         <div class="chart-grid">
-            <!-- Risk Model Validation -->
-            <section class="panel" id="validation-panel">
+            <!-- Global Trends -->
+            <section class="panel" id="global-trends-panel">
                 <div class="panel-header">
-                    <h2>Model Validation — Backtest</h2>
-                    <p class="panel-desc">Train 2016–2022 → Test 2023–2025</p>
-                </div>
-                <div class="validation-metrics" id="validation-metrics">
-                    <!-- Dynamically populated -->
+                    <h2>Global Trends</h2>
                 </div>
                 <div class="chart-container chart-container-sm">
-                    <canvas id="validation-chart"></canvas>
+                    <!-- Ready for global trends data -->
                 </div>
             </section>
 
-            <!-- Capital Allocation -->
-            <section class="panel" id="capital-panel">
+            <!-- EPC -->
+            <section class="panel" id="epc-panel">
                 <div class="panel-header">
-                    <h2>Optimal Capital Allocation</h2>
-                    <p class="panel-desc">Based on opportunity score (1 − risk)</p>
+                    <h2>EPC</h2>
                 </div>
                 <div class="chart-container">
-                    <canvas id="capital-chart"></canvas>
+                    <!-- Ready for EPC data -->
                 </div>
             </section>
         </div>
@@ -165,24 +147,6 @@
             </div>
             <div class="chart-container">
                 <canvas id="factor-chart"></canvas>
-            </div>
-        </section>
-
-        <!-- Section 4b: Risk Decomposition -->
-        <section class="panel panel-full" id="decomposition-panel">
-            <div class="panel-header">
-                <h2>Risk Factor Decomposition by Region</h2>
-                <p class="panel-desc">How repos, HPI momentum, and deprivation contribute to each region's risk</p>
-            </div>
-            <div class="decomp-container">
-                <div>
-                    <div class="chart-container chart-container-sm">
-                        <canvas id="decomp-chart"></canvas>
-                    </div>
-                </div>
-                <div class="decomp-detail-view" id="decomp-detail-view">
-                    <div class="decomp-placeholder">Select a region to see factor breakdown</div>
-                </div>
             </div>
         </section>
 
@@ -212,52 +176,11 @@
             </div>
         </section>
 
-        <!-- Section 6: Formula -->
-        <section class="panel panel-full" id="formula-panel">
-            <div class="panel-header">
-                <h2>The Model</h2>
-            </div>
-            <div class="formula-content">
-                <div class="formula-box">
-                    <div class="formula-equation">
-                        Risk Score = 0.4 × R<sub>repos</sub> + 0.3 × R<sub>hpi</sub> + 0.3 × R<sub>deprivation</sub>
-                    </div>
-                    <div class="formula-details">
-                        <div class="formula-item">
-                            <span class="formula-dot" style="background: #ef4444;"></span>
-                            <strong>R<sub>repos</sub></strong> — Normalised repossession rate (higher repos = higher
-                            risk)
-                        </div>
-                        <div class="formula-item">
-                            <span class="formula-dot" style="background: #f59e0b;"></span>
-                            <strong>R<sub>hpi</sub></strong> — Inverted HPI momentum (falling prices = higher risk)
-                        </div>
-                        <div class="formula-item">
-                            <span class="formula-dot" style="background: #8b5cf6;"></span>
-                            <strong>R<sub>deprivation</sub></strong> — IMD deprivation score (higher deprivation =
-                            higher risk)
-                        </div>
-                    </div>
-                </div>
-                <div class="formula-box">
-                    <div class="formula-equation">
-                        Capital Allocation ∝ (1 − Risk Score) / Σ(1 − Risk Scores)
-                    </div>
-                    <div class="formula-details">
-                        <div class="formula-item">
-                            <span class="formula-dot" style="background: #10b981;"></span>
-                            <strong>Expected Return</strong> — Regions with lower risk receive proportionally more
-                            capital
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <!-- ...existing code... -->
     </main>
 
     <footer class="dashboard-footer">
-        <p>Data sources: HM Land Registry (UK HPI), Ministry of Housing (IoD 2025) • Generated <span
-                id="gen-date">—</span></p>
+        <p>Data sources: HM Land Registry (UK HPI), Ministry of Housing (IoD 2025)</p>
     </footer>
 
     <script src="app.js"></script>

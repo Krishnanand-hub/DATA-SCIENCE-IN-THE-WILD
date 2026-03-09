@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 UK Lending Risk Dashboard - Data Preprocessing
-Aggregates housing data, computes risk scores, and exports JSON for the dashboard.
+Aggregates housing data from UK-HPI file, computes risk scores, and exports JSON for the dashboard.
 """
 
 import csv
@@ -69,62 +69,55 @@ def get_region_for_la(la_code):
     return None
 
 
-def load_average_prices():
-    """Load and aggregate average prices by region and date."""
-    print("Loading average prices...")
+def load_uk_hpi():
+    """Load UK-HPI file and extract prices/indices by region and date."""
+    print("Loading UK-HPI data...")
     prices = defaultdict(dict)
-    filepath = f"{DATA_DIR}/Average-prices-2025-12.csv"
+    indices = defaultdict(dict)
+    filepath = f"{DATA_DIR}/UK-HPI-full-file-2025-12.csv"
 
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            region = row["Region_Name"]
+            region = row["RegionName"].strip()
             if region not in REGIONS:
                 continue
-            date = row["Date"]
+
+            # Parse date: DD/MM/YYYY → YYYY-MM-DD
+            try:
+                raw_date = row["Date"].strip()
+                dt = datetime.strptime(raw_date, "%d/%m/%Y")
+                date = dt.strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+
             # Only 2010 onwards for the dashboard
             if date < "2010-01-01":
                 continue
+
             try:
-                avg_price = float(row["Average_Price"]) if row["Average_Price"] else None
-                annual_change = float(row["Annual_Change"]) if row["Annual_Change"] else None
-                monthly_change = float(row["Monthly_Change"]) if row["Monthly_Change"] else None
+                avg_price = float(row["AveragePrice"]) if row["AveragePrice"] else None
+                index_val = float(row["Index"]) if row["Index"] else None
+                annual_change = float(row["12m%Change"]) if row["12m%Change"] else None
+                monthly_change = float(row["1m%Change"]) if row["1m%Change"] else None
             except (ValueError, KeyError):
                 continue
 
-            prices[region][date] = {
-                "price": avg_price,
-                "annual_change": annual_change,
-                "monthly_change": monthly_change,
-            }
+            # Store price data
+            if avg_price:
+                prices[region][date] = {
+                    "price": avg_price,
+                    "annual_change": annual_change,
+                    "monthly_change": monthly_change,
+                }
+
+            # Store index data
+            if index_val:
+                indices[region][date] = index_val
 
     print(f"  Loaded prices for {len(prices)} regions")
-    return prices
-
-
-def load_indices():
-    """Load house price indices by region and date."""
-    print("Loading price indices...")
-    indices = defaultdict(dict)
-    filepath = f"{DATA_DIR}/Indices-2025-12.csv"
-
-    with open(filepath, "r") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            region = row["Region_Name"]
-            if region not in REGIONS:
-                continue
-            date = row["Date"]
-            if date < "2010-01-01":
-                continue
-            try:
-                index_val = float(row["Index"]) if row["Index"] else None
-            except (ValueError, KeyError):
-                continue
-            indices[region][date] = index_val
-
     print(f"  Loaded indices for {len(indices)} regions")
-    return indices
+    return prices, indices
 
 
 def load_repossessions():
@@ -455,8 +448,7 @@ def main():
     print("=" * 60)
 
     # Load data
-    prices = load_average_prices()
-    indices = load_indices()
+    prices, indices = load_uk_hpi()
     repos = load_repossessions()
     deprivation, la_data = load_deprivation()
 
@@ -483,8 +475,7 @@ def main():
         "metadata": {
             "generated_at": datetime.now().isoformat(),
             "data_sources": [
-                "Average-prices-2025-12.csv",
-                "Indices-2025-12.csv",
+                "UK-HPI-full-file-2025-12.csv",
                 "Repossession-2025-12.csv",
                 "IoD2025 Local Authority District Summaries",
             ],

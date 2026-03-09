@@ -44,35 +44,31 @@ let charts = {};
 async function init() {
     try {
         const res = await fetch('dashboard_data.json');
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
         dashboardData = await res.json();
         renderAll();
     } catch (err) {
         console.error('Failed to load data:', err);
-        document.body.innerHTML = '<div style="color:#ef4444;text-align:center;padding:60px;font-size:1.2rem;">Failed to load dashboard_data.json. Run preprocess.py first.</div>';
+        const errorMsg = `Failed to load dashboard_data.json: ${err.message}. 
+        Ensure you are in the Dashboard directory and run: 
+        1) python3 preprocess.py 
+        2) python3 -m http.server 8000`;
+        document.body.innerHTML = `<div style="color:#ef4444;text-align:center;padding:60px;font-size:1rem;white-space:pre-wrap;font-family:monospace;">${errorMsg}</div>`;
     }
 }
 
 function renderAll() {
-    renderHeader();
     renderRiskCards();
-    renderPriceChart();
     renderRepoChart();
-    renderValidation();
-    renderCapitalChart();
     renderFactorChart();
-    renderDecompositionChart();
     renderTable();
     setupControls();
 }
 
 // ─── Header ───
 function renderHeader() {
-    const bt = dashboardData.backtest;
-    document.getElementById('backtest-accuracy').textContent =
-        (bt.spearman_train_vs_test * 100).toFixed(0) + '%';
-    document.getElementById('region-count').textContent =
-        dashboardData.metadata.scoring_regions.length;
-
     const genDate = new Date(dashboardData.metadata.generated_at);
     const now = new Date();
     const daysAgo = Math.floor((now - genDate) / (1000 * 60 * 60 * 24));
@@ -706,22 +702,18 @@ function renderTable() {
 
 // ─── Controls ───
 function setupControls() {
-    const priceSelect = document.getElementById('price-region-select');
     const repoSelect = document.getElementById('repo-region-select');
 
-    // Populate selects
+    // Populate repo select
     const regions = dashboardData.metadata.scoring_regions;
     regions.forEach(r => {
-        priceSelect.innerHTML += `<option value="${r}">${r}</option>`;
         repoSelect.innerHTML += `<option value="${r}">${r}</option>`;
     });
     // Add England and Wales
     ['England', 'Wales'].forEach(r => {
-        priceSelect.innerHTML += `<option value="${r}">${r}</option>`;
         repoSelect.innerHTML += `<option value="${r}">${r}</option>`;
     });
 
-    priceSelect.addEventListener('change', e => renderPriceChart(e.target.value));
     repoSelect.addEventListener('change', e => renderRepoChart(e.target.value));
 
     // ECL Calculator: live LTV update

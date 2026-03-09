@@ -1,9 +1,8 @@
 {
   "metadata": {
-    "generated_at": "2026-03-06T01:35:14.434775",
+    "generated_at": "2026-03-09T12:11:20.049019",
     "data_sources": [
-      "Average-prices-2025-12.csv",
-      "Indices-2025-12.csv",
+      "UK-HPI-full-file-2025-12.csv",
       "Repossession-2025-12.csv",
       "IoD2025 Local Authority District Summaries"
     ],
