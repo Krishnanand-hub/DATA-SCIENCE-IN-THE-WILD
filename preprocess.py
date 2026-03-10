@@ -209,9 +209,12 @@ def load_deprivation():
     print(f"  Aggregated deprivation for {len(regional_deprivation)} regions")
     return regional_deprivation, la_data
 
+def risk_model(prices, repos, deprivation):
+    """Compute lending risk scores per region using logistic regression fitted on repossessions."""
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.preprocessing import StandardScaler
+    import numpy as np
 
-def compute_risk_scores(prices, indices, repos, deprivation):
-    """Compute lending risk scores per region."""
     print("Computing risk scores...")
 
     # Get common date range (repos data: 2016-2025)
@@ -223,99 +226,119 @@ def compute_risk_scores(prices, indices, repos, deprivation):
     # Split for backtest
     train_cutoff = "2023-01-01"
     train_dates = [d for d in repo_date_range if d < train_cutoff]
-    test_dates = [d for d in repo_date_range if d >= train_cutoff]
+    test_dates  = [d for d in repo_date_range if d >= train_cutoff]
 
-    # Exclude aggregate regions for scoring (England, Wales are aggregates of the sub-regions)
+    # Exclude aggregate regions
     scoring_regions = [r for r in REGIONS if r not in ["England", "Wales"]]
 
+    # ------------------------------------------------------------------ #
+    # 1. Build per-region feature matrix and repossession target          #
+    # ------------------------------------------------------------------ #
     risk_results = {}
 
     for region in scoring_regions:
-        # 1. Repo intensity (average monthly repos)
-        train_repos = [repos[region].get(d, 0) for d in train_dates if d in repos.get(region, {})]
-        test_repos = [repos[region].get(d, 0) for d in test_dates if d in repos.get(region, {})]
-        all_repos = [repos[region].get(d, 0) for d in repo_date_range if d in repos.get(region, {})]
+        region_prices = prices.get(region, {})
+        region_repos  = repos.get(region, {})
+
+        # Repo counts
+        train_repos = [region_repos.get(d, 0) for d in train_dates]
+        test_repos  = [region_repos.get(d, 0) for d in test_dates]
+        all_repos   = [region_repos.get(d, 0) for d in repo_date_range]
 
         avg_repos_train = sum(train_repos) / max(len(train_repos), 1)
-        avg_repos_test = sum(test_repos) / max(len(test_repos), 1)
-        avg_repos_all = sum(all_repos) / max(len(all_repos), 1)
-        total_repos = sum(all_repos)
+        avg_repos_test  = sum(test_repos)  / max(len(test_repos),  1)
+        avg_repos_all   = sum(all_repos)   / max(len(all_repos),   1)
+        total_repos     = sum(all_repos)
 
-        # 2. HPI momentum (average annual change in test period)
-        recent_prices = {}
-        for d in repo_date_range:
-            if d in prices.get(region, {}):
-                recent_prices[d] = prices[region][d]
+        # HPI features
+        annual_changes = [
+            v["annual_change"] for v in region_prices.values()
+            if v.get("annual_change") is not None
+        ]
+        avg_annual_change = sum(annual_changes) / max(len(annual_changes), 1) if annual_changes else 0.0
 
-        annual_changes = [v["annual_change"] for v in recent_prices.values()
-                         if v["annual_change"] is not None]
-        avg_annual_change = sum(annual_changes) / max(len(annual_changes), 1) if annual_changes else 0
+        recent_changes = [
+            region_prices[d]["annual_change"]
+            for d in sorted(region_prices)[-12:]
+            if region_prices[d].get("annual_change") is not None
+        ]
+        recent_hpi_trend = sum(recent_changes) / max(len(recent_changes), 1) if recent_changes else 0.0
 
-        # Recent HPI trend (last 12 months)
-        recent_changes = []
-        for d in sorted(recent_prices.keys())[-12:]:
-            if recent_prices[d]["annual_change"] is not None:
-                recent_changes.append(recent_prices[d]["annual_change"])
-        recent_hpi_trend = sum(recent_changes) / max(len(recent_changes), 1) if recent_changes else 0
-
-        # 3. Deprivation score
+        # Deprivation
         dep_score = deprivation.get(region, {}).get("deprivation_score", 0.5)
 
-        # 4. Latest price
-        latest_dates = sorted(prices.get(region, {}).keys())
-        latest_price = prices[region][latest_dates[-1]]["price"] if latest_dates else None
+        # Latest price
+        latest_dates = sorted(region_prices.keys())
+        latest_price = region_prices[latest_dates[-1]]["price"] if latest_dates else None
 
         risk_results[region] = {
-            "avg_repos_train": round(avg_repos_train, 2),
-            "avg_repos_test": round(avg_repos_test, 2),
-            "avg_repos_all": round(avg_repos_all, 2),
-            "total_repos": total_repos,
-            "avg_annual_hpi_change": round(avg_annual_change, 2),
-            "recent_hpi_trend": round(recent_hpi_trend, 2),
-            "deprivation_score": dep_score,
-            "latest_price": latest_price,
+            "avg_repos_train":    round(avg_repos_train, 2),
+            "avg_repos_test":     round(avg_repos_test,  2),
+            "avg_repos_all":      round(avg_repos_all,   2),
+            "total_repos":        total_repos,
+            "avg_annual_hpi_change": round(avg_annual_change,  2),
+            "recent_hpi_trend":   round(recent_hpi_trend, 2),
+            "deprivation_score":  dep_score,
+            "latest_price":       latest_price,
         }
 
-    # Normalize factors across regions
-    all_repos_vals = [r["avg_repos_all"] for r in risk_results.values()]
-    all_dep_vals = [r["deprivation_score"] for r in risk_results.values()]
-    all_hpi_vals = [r["recent_hpi_trend"] for r in risk_results.values()]
+    # ------------------------------------------------------------------ #
+    # 2. Fit logistic regression on TRAINING regions/period               #
+    #    Target: above-median repossession rate in the train window        #
+    #    Features: recent_hpi_trend, deprivation_score, latest_price       #
+    # ------------------------------------------------------------------ #
+    regions_with_data = [
+        r for r in scoring_regions
+        if risk_results[r]["latest_price"] is not None
+    ]
 
-    max_repos = max(all_repos_vals) if all_repos_vals else 1
-    min_repos = min(all_repos_vals) if all_repos_vals else 0
-    max_dep = max(all_dep_vals) if all_dep_vals else 1
-    min_dep = min(all_dep_vals) if all_dep_vals else 0
-    max_hpi = max(all_hpi_vals) if all_hpi_vals else 1
-    min_hpi = min(all_hpi_vals) if all_hpi_vals else 0
+    X_raw = np.array([
+        [
+            risk_results[r]["recent_hpi_trend"],
+            risk_results[r]["deprivation_score"],
+            risk_results[r]["latest_price"],
+        ]
+        for r in regions_with_data
+    ])
 
-    for region, data in risk_results.items():
-        # Normalize 0-1
-        norm_repos = (data["avg_repos_all"] - min_repos) / max(max_repos - min_repos, 0.001)
-        norm_dep = (data["deprivation_score"] - min_dep) / max(max_dep - min_dep, 0.001)
-        # HPI: lower trend = higher risk, so invert
-        hpi_range = max(max_hpi - min_hpi, 0.001)
-        norm_hpi_risk = 1 - ((data["recent_hpi_trend"] - min_hpi) / hpi_range)
+    # Binary target: 1 if avg train repos is above the median across regions
+    train_repo_vals = np.array([risk_results[r]["avg_repos_train"] for r in regions_with_data])
+    median_repos    = np.median(train_repo_vals)
+    y               = (train_repo_vals > median_repos).astype(int)
 
-        # Weighted risk score (0=safest, 1=riskiest)
-        w_repos = 0.40
-        w_hpi = 0.30
-        w_dep = 0.30
-        risk_score = w_repos * norm_repos + w_hpi * norm_hpi_risk + w_dep * norm_dep
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X_raw)
 
-        data["norm_repos"] = round(norm_repos, 4)
-        data["norm_hpi_risk"] = round(norm_hpi_risk, 4)
-        data["norm_deprivation"] = round(norm_dep, 4)
-        data["risk_score"] = round(risk_score, 4)
+    model = LogisticRegression(max_iter=1000, random_state=42)
+    model.fit(X_scaled, y)
 
-        # Capital allocation (inverse of risk)
-        data["opportunity_score"] = round(1 - risk_score, 4)
+    # ------------------------------------------------------------------ #
+    # 3. Predict repossession probability for every region (full period)  #
+    # ------------------------------------------------------------------ #
+    proba_high_risk = model.predict_proba(X_scaled)[:, 1]  # P(above-median repos)
 
-    # Rank by risk
+    for region, prob in zip(regions_with_data, proba_high_risk):
+        data = risk_results[region]
+        data["risk_score"]       = round(float(prob), 4)
+        data["opportunity_score"] = round(1.0 - float(prob), 4)
+
+    # Regions missing latest_price fall back to neutral score
+    for region in scoring_regions:
+        if region not in regions_with_data:
+            risk_results[region]["risk_score"]       = 0.5
+            risk_results[region]["opportunity_score"] = 0.5
+
+    # ------------------------------------------------------------------ #
+    # 4. Rank by risk                                                     #
+    # ------------------------------------------------------------------ #
     sorted_by_risk = sorted(risk_results.items(), key=lambda x: x[1]["risk_score"], reverse=True)
     for rank, (region, data) in enumerate(sorted_by_risk, 1):
         data["risk_rank"] = rank
 
     print(f"  Computed risk scores for {len(risk_results)} regions")
+    print(f"  Model coefficients — HPI trend: {model.coef_[0][0]:.3f}, "
+          f"Deprivation: {model.coef_[0][1]:.3f}, "
+          f"Latest price: {model.coef_[0][2]:.3f}")
     return risk_results
 
 
@@ -453,7 +476,8 @@ def main():
     deprivation, la_data = load_deprivation()
 
     # Compute risk scores
-    risk_results = compute_risk_scores(prices, indices, repos, deprivation)
+    risk_results = risk_model(prices, repos, deprivation)
+    print(risk_results)
 
     # Backtest
     backtest = compute_backtest(prices, repos, risk_results)

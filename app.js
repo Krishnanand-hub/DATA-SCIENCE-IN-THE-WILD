@@ -60,8 +60,12 @@ async function init() {
 }
 
 function renderAll() {
+    renderHeader();
     renderRiskCards();
+    renderPriceChart();
     renderRepoChart();
+    renderValidation();
+    renderCapitalChart();
     renderFactorChart();
     renderTable();
     setupControls();
@@ -81,7 +85,8 @@ function renderHeader() {
         dateStr = `Updated ${daysAgo}d ago`;
     }
 
-    document.getElementById('gen-date').textContent = dateStr;
+    const genDateElement = document.getElementById('gen-date');
+    if (genDateElement) genDateElement.textContent = dateStr;
 }
 
 // Helper: Calculate 12-month trend for a region
@@ -111,6 +116,8 @@ function computeRegionTrend(region) {
 // ─── Risk Cards ───
 function renderRiskCards() {
     const container = document.getElementById('risk-cards-container');
+    if (!container) return;
+
     const scores = dashboardData.risk_scores;
     const regions = Object.keys(scores).sort((a, b) => scores[a].risk_rank - scores[b].risk_rank);
 
@@ -152,15 +159,24 @@ function renderRiskCards() {
 
 // ─── House Price Chart ───
 function renderPriceChart(selectedRegion = 'all') {
-    const ctx = document.getElementById('price-chart').getContext('2d');
+    const canvas = document.getElementById('price-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (charts.price) charts.price.destroy();
 
     const ts = dashboardData.time_series.prices;
+    const allDates = dashboardData.time_series.price_dates;
+
     const regionsToShow = selectedRegion === 'all'
         ? dashboardData.metadata.scoring_regions
         : [selectedRegion];
 
-    // Downsample: take every 3rd data point for performance
+    // Build central labels array to match chart ticks
+    const labels = selectedRegion === 'all'
+        ? allDates.filter((_, i) => i % 3 === 0)
+        : allDates;
+
+    // Downsample: take every 3rd data point for performance when showing all
     const datasets = regionsToShow.map(region => {
         const data = ts[region] || [];
         const sampled = selectedRegion === 'all'
@@ -169,7 +185,7 @@ function renderPriceChart(selectedRegion = 'all') {
 
         return {
             label: region,
-            data: sampled.map(d => ({ x: d.date, y: d.price })),
+            data: sampled.map(d => d.price),
             borderColor: REGION_COLORS_SOLID[region],
             backgroundColor: REGION_COLORS[region],
             borderWidth: selectedRegion === 'all' ? 1.5 : 2.5,
@@ -181,7 +197,7 @@ function renderPriceChart(selectedRegion = 'all') {
 
     charts.price = new Chart(ctx, {
         type: 'line',
-        data: { datasets },
+        data: { labels, datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -227,7 +243,9 @@ function renderPriceChart(selectedRegion = 'all') {
 
 // ─── Repossession Chart ───
 function renderRepoChart(selectedRegion = 'all') {
-    const ctx = document.getElementById('repo-chart').getContext('2d');
+    const canvas = document.getElementById('repo-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (charts.repo) charts.repo.destroy();
 
     const ts = dashboardData.time_series.repos;
@@ -344,8 +362,12 @@ function renderRepoChart(selectedRegion = 'all') {
 
 // ─── Validation Panel ───
 function renderValidation() {
-    const bt = dashboardData.backtest;
+    const canvas = document.getElementById('validation-chart');
     const metricsContainer = document.getElementById('validation-metrics');
+    if (!canvas || !metricsContainer) return;
+
+    const ctx = canvas.getContext('2d');
+    const bt = dashboardData.backtest;
 
     const spearmanPct1 = (bt.spearman_train_vs_test * 100).toFixed(0);
     const spearmanPct2 = (bt.spearman_risk_vs_test * 100).toFixed(0);
@@ -363,8 +385,6 @@ function renderValidation() {
         </div>
     `;
 
-    // Scatter plot: risk rank vs actual test rank
-    const ctx = document.getElementById('validation-chart').getContext('2d');
     if (charts.validation) charts.validation.destroy();
 
     const regions = Object.keys(bt.regions);
@@ -437,7 +457,10 @@ function renderValidation() {
 
 // ─── Capital Allocation ───
 function renderCapitalChart() {
-    const ctx = document.getElementById('capital-chart').getContext('2d');
+    const canvas = document.getElementById('capital-chart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
     if (charts.capital) charts.capital.destroy();
 
     const alloc = dashboardData.capital_allocation;
@@ -495,13 +518,39 @@ function renderCapitalChart() {
     });
 }
 
-// ─── Factor Breakdown ───
+// ─── Factor Chart ───
 function renderFactorChart() {
-    const ctx = document.getElementById('factor-chart').getContext('2d');
+    const canvas = document.getElementById('factor-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (charts.factor) charts.factor.destroy();
 
-    const scores = dashboardData.risk_scores;
-    const regions = Object.keys(scores).sort((a, b) => scores[a].risk_rank - scores[b].risk_rank);
+    // Convert object → array of [regionName, regionData]
+    const entries = Object.entries(dashboardData.risk_scores);
+
+    // Sort by risk_rank
+    const sorted = entries.sort((a, b) => a[1].risk_rank - b[1].risk_rank);
+
+    const regions = sorted.map(([name]) => name);
+    const scores = sorted.map(([_, data]) => data);
+
+    // Compute relative factor contributions normalized to 100%
+    // Since original specific 'contrib_pct' keys don't exist in json
+    const maxRepo = Math.max(...scores.map(s => s.avg_repos_all));
+    const maxDep = Math.max(...scores.map(s => s.deprivation_score));
+
+    const factorData = scores.map(s => {
+        const hpiRisk = Math.max(0, 10 - (s.recent_hpi_trend || 0)); // Inverse trend = higher risk
+        const depRisk = ((s.deprivation_score || 0) / maxDep) * 10;
+        const repoRisk = ((s.avg_repos_all || 0) / maxRepo) * 10;
+        const totalRiskSum = hpiRisk + depRisk + repoRisk || 1;
+
+        return {
+            hpiPct: (hpiRisk / totalRiskSum) * 100,
+            depPct: (depRisk / totalRiskSum) * 100,
+            repoPct: (repoRisk / totalRiskSum) * 100
+        };
+    });
 
     charts.factor = new Chart(ctx, {
         type: 'bar',
@@ -509,26 +558,26 @@ function renderFactorChart() {
             labels: regions,
             datasets: [
                 {
-                    label: 'Repo Rate (40%)',
-                    data: regions.map(r => scores[r].norm_repos * 0.4 * 100),
-                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
-                    borderColor: '#ef4444',
-                    borderWidth: 1,
-                    borderRadius: 2,
-                },
-                {
-                    label: 'HPI Risk (30%)',
-                    data: regions.map(r => scores[r].norm_hpi_risk * 0.3 * 100),
+                    label: 'HPI Trend Risk',
+                    data: factorData.map(f => f.hpiPct.toFixed(1)),
                     backgroundColor: 'rgba(245, 158, 11, 0.7)',
                     borderColor: '#f59e0b',
                     borderWidth: 1,
                     borderRadius: 2,
                 },
                 {
-                    label: 'Deprivation (30%)',
-                    data: regions.map(r => scores[r].norm_deprivation * 0.3 * 100),
+                    label: 'Deprivation Risk',
+                    data: factorData.map(f => f.depPct.toFixed(1)),
                     backgroundColor: 'rgba(139, 92, 246, 0.7)',
                     borderColor: '#8b5cf6',
+                    borderWidth: 1,
+                    borderRadius: 2,
+                },
+                {
+                    label: 'Repossession Risk',
+                    data: factorData.map(f => f.repoPct.toFixed(1)),
+                    backgroundColor: 'rgba(6, 182, 212, 0.7)',
+                    borderColor: '#06b6d4',
                     borderWidth: 1,
                     borderRadius: 2,
                 },
@@ -547,126 +596,23 @@ function renderFactorChart() {
                     borderColor: 'rgba(100, 120, 180, 0.3)',
                     borderWidth: 1,
                     callbacks: {
-                        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}`
+                        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`
                     }
                 }
             },
             scales: {
                 x: {
                     stacked: true,
-                    grid: { display: false },
+                    grid:  { display: false },
                     ticks: { font: { size: 10 } }
                 },
                 y: {
                     stacked: true,
-                    grid: { color: 'rgba(100, 120, 180, 0.08)' },
-                    title: { display: true, text: 'Risk Score (0–100)', color: '#64748b' },
                     max: 100,
+                    grid:  { color: 'rgba(100, 120, 180, 0.08)' },
+                    title: { display: true, text: 'Relative Risk Contribution %', color: '#64748b' },
                 }
             }
-        }
-    });
-}
-
-// ─── Risk Decomposition ───
-function renderDecompositionChart() {
-    const ctx = document.getElementById('decomp-chart').getContext('2d');
-    if (charts.decomp) charts.decomp.destroy();
-
-    const scores = dashboardData.risk_scores;
-    const regions = Object.keys(scores).sort((a, b) => scores[a].risk_rank - scores[b].risk_rank);
-
-    // Prepare decomposition data: for each region, show the 3 factors
-    const reposData = regions.map(r => (scores[r].norm_repos * 0.4 * 100).toFixed(1));
-    const hpiData = regions.map(r => (scores[r].norm_hpi_risk * 0.3 * 100).toFixed(1));
-    const depData = regions.map(r => (scores[r].norm_deprivation * 0.3 * 100).toFixed(1));
-
-    charts.decomp = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: regions.map(r => r.substring(0, 10)), // Short region names
-            datasets: [
-                {
-                    label: 'Repos (40%)',
-                    data: reposData,
-                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
-                    borderColor: '#ef4444',
-                    borderWidth: 1,
-                },
-                {
-                    label: 'HPI Risk (30%)',
-                    data: hpiData,
-                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
-                    borderColor: '#f59e0b',
-                    borderWidth: 1,
-                },
-                {
-                    label: 'Deprivation (30%)',
-                    data: depData,
-                    backgroundColor: 'rgba(139, 92, 246, 0.7)',
-                    borderColor: '#8b5cf6',
-                    borderWidth: 1,
-                },
-            ]
-        },
-        options: {
-            indexAxis: 'y', // Horizontal bars for better readability
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { boxWidth: 10, padding: 12, font: { size: 10 } }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    borderColor: 'rgba(100, 120, 180, 0.3)',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.x.toFixed(1)}`
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    stacked: true,
-                    grid: { color: 'rgba(100, 120, 180, 0.08)' },
-                },
-                y: {
-                    stacked: true,
-                    grid: { display: false },
-                    ticks: { font: { size: 9 } }
-                }
-            }
-        }
-    });
-
-    // Add click to show detail view
-    ['decomp-detail-view'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.innerHTML = `
-                <div class="decomp-detail-content">
-                    <div class="decomp-detail-title">Factor Contributions</div>
-                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">
-                        Click the chart bars to see detailed breakdown for a specific region
-                    </p>
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-glass);">
-                        <div class="decomp-factor-item">
-                            <span class="factor-color" style="background: #ef4444;"></span>
-                            <span>Repossessions drive risk increase</span>
-                        </div>
-                        <div class="decomp-factor-item">
-                            <span class="factor-color" style="background: #f59e0b;"></span>
-                            <span>HPI momentum affects recovery value</span>
-                        </div>
-                        <div class="decomp-factor-item">
-                            <span class="factor-color" style="background: #8b5cf6;"></span>
-                            <span>Deprivation indicates payment difficulty</span>
-                        </div>
-                    </div>
-                </div>
-            `;
         }
     });
 }
@@ -674,6 +620,8 @@ function renderDecompositionChart() {
 // ─── Summary Table ───
 function renderTable() {
     const tbody = document.getElementById('table-body');
+    if (!tbody) return;
+
     const scores = dashboardData.risk_scores;
     const alloc = dashboardData.capital_allocation;
     const regions = Object.keys(scores).sort((a, b) => scores[a].risk_rank - scores[b].risk_rank);
@@ -703,45 +651,51 @@ function renderTable() {
 // ─── Controls ───
 function setupControls() {
     const repoSelect = document.getElementById('repo-region-select');
+    if (repoSelect) {
+        // Populate repo select
+        const regions = dashboardData.metadata.scoring_regions;
+        regions.forEach(r => {
+            repoSelect.innerHTML += `<option value="${r}">${r}</option>`;
+        });
+        // Add England and Wales
+        ['England', 'Wales'].forEach(r => {
+            repoSelect.innerHTML += `<option value="${r}">${r}</option>`;
+        });
 
-    // Populate repo select
-    const regions = dashboardData.metadata.scoring_regions;
-    regions.forEach(r => {
-        repoSelect.innerHTML += `<option value="${r}">${r}</option>`;
-    });
-    // Add England and Wales
-    ['England', 'Wales'].forEach(r => {
-        repoSelect.innerHTML += `<option value="${r}">${r}</option>`;
-    });
-
-    repoSelect.addEventListener('change', e => renderRepoChart(e.target.value));
+        repoSelect.addEventListener('change', e => renderRepoChart(e.target.value));
+    }
 
     // ECL Calculator: live LTV update
     const propInput = document.getElementById('calc-property-value');
     const loanInput = document.getElementById('calc-loan-amount');
     const postcodeInput = document.getElementById('calc-postcode');
+    const ltvValue = document.getElementById('calc-ltv-value');
 
     function updateLTV() {
         const pv = parseFloat(propInput.value) || 0;
         const la = parseFloat(loanInput.value) || 0;
         const ltv = pv > 0 ? (la / pv * 100) : 0;
-        document.getElementById('calc-ltv-value').textContent = ltv.toFixed(1) + '%';
+        if (ltvValue) ltvValue.textContent = ltv.toFixed(1) + '%';
     }
 
-    propInput.addEventListener('input', updateLTV);
-    loanInput.addEventListener('input', updateLTV);
+    if (propInput) propInput.addEventListener('input', updateLTV);
+    if (loanInput) loanInput.addEventListener('input', updateLTV);
 
     // Show region on postcode input
-    postcodeInput.addEventListener('input', () => {
-        const region = postcodeToRegion(postcodeInput.value);
-        const badge = document.getElementById('calc-region-badge');
-        badge.textContent = region ? `📍 ${region}` : '';
-    });
+    if (postcodeInput) {
+        postcodeInput.addEventListener('input', () => {
+            const region = postcodeToRegion(postcodeInput.value);
+            const badge = document.getElementById('calc-region-badge');
+            if (badge) badge.textContent = region ? `📍 ${region}` : '';
+        });
 
-    // Allow Enter key to calculate
-    [postcodeInput, propInput, loanInput, document.getElementById('calc-loan-term')].forEach(el => {
-        el.addEventListener('keydown', e => { if (e.key === 'Enter') calculateECL(); });
-    });
+        // Allow Enter key to calculate
+        [postcodeInput, propInput, loanInput, document.getElementById('calc-loan-term')].forEach(el => {
+            if (el) {
+                el.addEventListener('keydown', e => { if (e.key === 'Enter') calculateECL(); });
+            }
+        });
+    }
 }
 
 // ─── Postcode → Region Mapping ───
@@ -786,7 +740,6 @@ const POSTCODE_TO_REGION = {
     'ME': 'South East', 'MK': 'South East', 'OX': 'South East',
     'PO': 'South East', 'RG': 'South East', 'RH': 'South East',
     'SL': 'South East', 'SO': 'South East', 'TN': 'South East',
-    'HP': 'South East',
     // South West
     'BA': 'South West', 'BH': 'South West', 'BS': 'South West',
     'DT': 'South West', 'EX': 'South West', 'GL': 'South West',
@@ -796,7 +749,7 @@ const POSTCODE_TO_REGION = {
     'CF': 'Wales', 'LL': 'Wales', 'LD': 'Wales', 'NP': 'Wales',
     'SA': 'Wales', 'SY': 'Wales',
     // Additional common codes
-    'NN': 'East Midlands', 'MK': 'South East',
+    'NN': 'East Midlands'
 };
 
 function postcodeToRegion(postcode) {
