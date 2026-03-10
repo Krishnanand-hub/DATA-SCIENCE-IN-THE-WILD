@@ -464,6 +464,254 @@ def build_time_series(prices, indices, repos):
         "repos": repo_series,
     }
 
+"""
+market_data.py
+==============
+Loads 2-year market data from local CSVs:
+  - S&P 500       → data/S&P_20-26.csv
+                    Date (yyyy-mm-dd), Close (float)
+  - Euro Stoxx 50 → data/Euro Stoxx 50 Historical Results Price Data.csv
+                    Date (dd/mm/yyyy), Change % (x.xx%)
+  - GBP to USD    → data/GBP to USD Historical Exchage Rates.csv
+                    Date (dd/mm/yyyy), Change % (x.xx%)
+
+Public API
+----------
+    from market_data import load_market_data
+    market = load_market_data()        # dict — drop into output["market_data"]
+"""
+
+import csv
+import os
+from datetime import datetime, timedelta
+
+# ---------------------------------------------------------------------------
+# Paths (relative to the script / preprocess.py location)
+# ---------------------------------------------------------------------------
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+
+SP500_FILE      = os.path.join(DATA_DIR, "S&P_20-26.csv")
+STOXX_FILE      = os.path.join(DATA_DIR, "Euro Stoxx 50 Historical Results Price Data.csv")
+GBPUSD_FILE     = os.path.join(DATA_DIR, "GBP to USD Historical Exchage Rates.csv")
+
+CUTOFF = datetime.today() - timedelta(days=2 * 365)
+
+
+# ---------------------------------------------------------------------------
+# Private helpers
+# ---------------------------------------------------------------------------
+
+def _parse_date_iso(raw: str) -> datetime | None:
+    """Parse yyyy-mm-dd dates (S&P CSV)."""
+    raw = raw.strip()
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _parse_date_dmy(raw: str) -> datetime | None:
+    """Parse dd/mm/yyyy dates (Euro Stoxx / GBP-USD CSVs)."""
+    raw = raw.strip()
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _parse_pct(raw: str) -> float | None:
+    """
+    Convert a change-% string to a plain float.
+    Handles:  '1.23%'  '-0.45%'  '1.23'  '-0.45'
+    """
+    raw = raw.strip().replace("%", "").replace(",", ".")
+    try:
+        return round(float(raw), 4)
+    except ValueError:
+        return None
+
+
+def _find_col(headers: list[str], candidates: list[str]) -> str | None:
+    """Case-insensitive column name lookup."""
+    lower = [h.lower().strip() for h in headers]
+    for c in candidates:
+        if c.lower() in lower:
+            return headers[lower.index(c.lower())]
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Loaders
+# ---------------------------------------------------------------------------
+
+def _load_sp500() -> list[dict]:
+    """
+    Returns list of:
+        {"date": "yyyy-mm-dd", "close": float}
+    sorted ascending, filtered to last 2 years.
+    """
+    rows = []
+    cutoff_with_lookback = CUTOFF - timedelta(days=5)  # grab one prior trading day
+    print("Loading S&P 500 market data...")
+
+    with open(SP500_FILE, newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        date_col = _find_col(reader.fieldnames, ["Date", "date"])
+        close_col = _find_col(reader.fieldnames, ["Close", "close", "Price", "price"])
+        if not date_col or not close_col:
+            raise ValueError(
+                f"S&P CSV: could not find Date/Close columns. "
+                f"Found: {reader.fieldnames}"
+            )
+
+        for row in reader:
+            dt = _parse_date_iso(row[date_col])
+            if dt is None or dt < cutoff_with_lookback:
+                continue
+            try:
+                close = round(float(row[close_col].replace(",", "")), 2)
+            except ValueError:
+                continue
+            rows.append({"date": dt.strftime("%Y-%m-%d"), "close": close, "_dt": dt})
+
+    rows.sort(key=lambda r: r["date"])
+    return rows
+
+
+def _load_stoxx50() -> list[dict]:
+    """
+    Returns list of:
+        {"date": "dd/mm/yyyy", "change_pct": float}
+    sorted ascending, filtered to last 2 years.
+    """
+    rows = []
+    with open(STOXX_FILE, newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        date_col   = _find_col(reader.fieldnames, ["Date", "date"])
+        change_col = _find_col(
+            reader.fieldnames,
+            ["Change %", "change %", "Change%", "change%", "Chg%", "chg%", "Change"],
+        )
+
+        if not date_col or not change_col:
+            raise ValueError(
+                f"Euro Stoxx CSV: could not find Date/Change% columns. "
+                f"Found: {reader.fieldnames}"
+            )
+
+        for row in reader:
+            dt = _parse_date_dmy(row[date_col])
+            if dt is None or dt < CUTOFF:
+                continue
+            pct = _parse_pct(row[change_col])
+            if pct is None:
+                continue
+            rows.append({"date": dt.strftime("%d/%m/%Y"), "change_pct": pct})
+
+    rows.sort(key=lambda r: datetime.strptime(r["date"], "%d/%m/%Y"))
+    return rows
+
+
+def _load_gbpusd() -> list[dict]:
+    """
+    Returns list of:
+        {"date": "dd/mm/yyyy", "change_pct": float}
+    sorted ascending, filtered to last 2 years.
+    """
+    rows = []
+    with open(GBPUSD_FILE, newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        date_col   = _find_col(reader.fieldnames, ["Date", "date"])
+        change_col = _find_col(
+            reader.fieldnames,
+            ["Change %", "change %", "Change%", "change%", "Chg%", "chg%", "Change"],
+        )
+
+        if not date_col or not change_col:
+            raise ValueError(
+                f"GBP/USD CSV: could not find Date/Change% columns. "
+                f"Found: {reader.fieldnames}"
+            )
+
+        for row in reader:
+            dt = _parse_date_dmy(row[date_col])
+            if dt is None or dt < CUTOFF:
+                continue
+            pct = _parse_pct(row[change_col])
+            if pct is None:
+                continue
+            rows.append({"date": dt.strftime("%d/%m/%Y"), "change_pct": pct})
+
+    rows.sort(key=lambda r: datetime.strptime(r["date"], "%d/%m/%Y"))
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def load_market_data() -> dict:
+    """
+    Load all three market data sources and return a unified dict:
+
+        {
+            "sp500": [
+                {"date": "2024-03-10", "close": 5123.41},
+                ...
+            ],
+            "euro_stoxx_50": [
+                {"date": "10/03/2024", "change_pct": -0.42},
+                ...
+            ],
+            "gbp_usd": [
+                {"date": "10/03/2024", "change_pct": 0.31},
+                ...
+            ],
+            "meta": {
+                "sp500_count": 504,
+                "euro_stoxx_count": 502,
+                "gbp_usd_count": 502,
+                "period_start": "2024-03-10",
+                "period_end":   "2026-03-10"
+            }
+        }
+
+    Raises FileNotFoundError / ValueError with a clear message if a CSV
+    is missing or has unexpected column names.
+    """
+    print("  Loading S&P 500 …")
+    sp500 = _load_sp500()
+    print(f"    → {len(sp500)} rows")
+
+    print("  Loading Euro Stoxx 50 …")
+    stoxx = _load_stoxx50()
+    print(f"    → {len(stoxx)} rows")
+
+    print("  Loading GBP/USD …")
+    gbpusd = _load_gbpusd()
+    print(f"    → {len(gbpusd)} rows")
+
+    # Derive overall period from S&P (ISO dates, easy to compare)
+    period_start = sp500[0]["date"]  if sp500  else "N/A"
+    period_end   = sp500[-1]["date"] if sp500  else "N/A"
+
+    return {
+        "sp500":         sp500,
+        "euro_stoxx_50": stoxx,
+        "gbp_usd":       gbpusd,
+        "meta": {
+            "sp500_count":      len(sp500),
+            "euro_stoxx_count": len(stoxx),
+            "gbp_usd_count":    len(gbpusd),
+            "period_start":     period_start,
+            "period_end":       period_end,
+        },
+    }
 
 def main():
     print("=" * 60)
@@ -484,6 +732,8 @@ def main():
 
     # Time series for charts
     time_series = build_time_series(prices, indices, repos)
+
+    market_data = load_market_data()
 
     # Capital allocation (normalized opportunity scores)
     scoring_regions = [r for r in REGIONS if r not in ["England", "Wales"]]
@@ -512,6 +762,7 @@ def main():
         "backtest": backtest,
         "capital_allocation": capital_allocation,
         "time_series": time_series,
+        "market_data": market_data
     }
 
     # Write JSON

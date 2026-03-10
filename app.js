@@ -64,6 +64,7 @@ function renderAll() {
     renderRiskCards();
     renderPriceChart();
     renderRepoChart();
+    renderGlobalTrend();
     renderValidation();
     renderCapitalChart();
     renderFactorChart();
@@ -234,6 +235,130 @@ function renderPriceChart(selectedRegion = 'all') {
                     grid: { color: 'rgba(100, 120, 180, 0.08)' },
                     ticks: {
                         callback: val => '£' + (val >= 1000 ? Math.round(val / 1000) + 'k' : val)
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+function renderGlobalTrend() {
+    const canvas = document.getElementById('global-trend');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    // Destroy existing chart instance to prevent overlaying
+    if (charts.globalTrend) charts.globalTrend.destroy();
+
+    // ─── 1. Data Processing ──────────────────────────────────────────────────
+    const md = dashboardData?.market_data;
+    if (!md) return;
+
+    function toISO(dateStr) {
+        if (!dateStr) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        const [d, m, y] = dateStr.split("/");
+        return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    }
+
+    function toChangePctMap(records) {
+        const map = new Map();
+        for (const r of records) {
+            const iso = toISO(r.date);
+            if (iso && r.change_pct != null) map.set(iso, r.change_pct);
+        }
+        return map;
+    }
+
+    function cumulativeIndex(dates, changePctMap) {
+        let level = 100;
+        return dates.map(d => {
+            const pct = changePctMap.get(d);
+            if (pct != null) level = level * (1 + pct / 100);
+            return level;
+        });
+    }
+
+    const sp500Map = toChangePctMap(md.sp500 || []);
+    const stoxxMap = toChangePctMap(md.euro_stoxx_50 || []);
+    const gbpMap = toChangePctMap(md.gbp_usd || []);
+
+    const allDates = [...new Set([
+        ...sp500Map.keys(),
+        ...stoxxMap.keys(),
+        ...gbpMap.keys(),
+    ])].sort();
+
+    // ─── 2. Chart.js Implementation ──────────────────────────────────────────
+    charts.globalTrend = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: allDates,
+            datasets: [
+                {
+                    label: 'S&P 500',
+                    data: cumulativeIndex(allDates, sp500Map),
+                    borderColor: '#4fffb0',
+                    backgroundColor: 'rgba(79, 255, 176, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3
+                },
+                {
+                    label: 'Euro Stoxx 50',
+                    data: cumulativeIndex(allDates, stoxxMap),
+                    borderColor: '#ff6b6b',
+                    borderDash: [6, 3],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3
+                },
+                {
+                    label: 'GBP / USD',
+                    data: cumulativeIndex(allDates, gbpMap),
+                    borderColor: '#4db8ff',
+                    borderDash: [2, 4],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { boxWidth: 15, padding: 15, font: { size: 11 } }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    borderColor: 'rgba(100, 120, 180, 0.3)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: (ctx) => `${ctx.dataset.label}: ${(ctx.parsed.y - 100).toFixed(2)}%`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: {
+                        maxTicksLimit: 8,
+                        callback: function(val) {
+                            const date = this.getLabelForValue(val);
+                            return date ? date.substring(2, 7) : ''; // Returns YY-MM
+                        }
+                    }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    title: { display: true, text: 'Cumulative % Return', color: '#5a6070' },
+                    ticks: {
+                        callback: (val) => `${(val - 100).toFixed(0)}%`
                     }
                 }
             }
