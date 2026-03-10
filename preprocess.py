@@ -679,7 +679,11 @@ def _find_col(headers: list[str], candidates: list[str]) -> str | None:
 def _load_sp500() -> list[dict]:
     """
     Returns list of:
-        {"date": "yyyy-mm-dd", "close": float}
+        {
+            "date": "yyyy-mm-dd",
+            "close": float,
+            "change_pct": float | None
+        }
     sorted ascending, filtered to last 2 years.
     """
     rows = []
@@ -706,7 +710,18 @@ def _load_sp500() -> list[dict]:
                 continue
             rows.append({"date": dt.strftime("%Y-%m-%d"), "close": close, "_dt": dt})
 
+    # Sort ascending
     rows.sort(key=lambda r: r["date"])
+
+    # --- NEW: compute daily percentage change ---
+    prev_close = None
+    for r in rows:
+        if prev_close is None:
+            r["change_pct"] = None
+        else:
+            r["change_pct"] = round((r["close"] - prev_close) / prev_close*100, 4)
+        prev_close = r["close"]
+
     return rows
 
 
@@ -891,14 +906,11 @@ def main():
         "backtest": backtest,
         "capital_allocation": capital_allocation,
         "time_series": time_series,
-<<<<<<< HEAD
-        "market_data": market_data
-=======
+        "market_data": market_data,
         "epc": {
             "global": epc_data,
             "by_region": epc_by_region,
         },
->>>>>>> 8c868d2 (added EPC visual)
     }
 
     # Write JSON

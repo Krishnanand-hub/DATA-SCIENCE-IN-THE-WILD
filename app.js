@@ -62,12 +62,9 @@ async function init() {
 function renderAll() {
     renderRiskCards();
     renderRepoChart();
-<<<<<<< HEAD
     renderGlobalTrend();
     renderValidation();
     renderCapitalChart();
-=======
->>>>>>> 8c868d2 (added EPC visual)
     renderFactorChart();
     renderEPCChart();
     renderTable();
