@@ -60,14 +60,16 @@ async function init() {
 }
 
 function renderAll() {
-    renderHeader();
     renderRiskCards();
-    renderPriceChart();
     renderRepoChart();
+<<<<<<< HEAD
     renderGlobalTrend();
     renderValidation();
     renderCapitalChart();
+=======
+>>>>>>> 8c868d2 (added EPC visual)
     renderFactorChart();
+    renderEPCChart();
     renderTable();
     setupControls();
 }
@@ -736,6 +738,97 @@ function renderFactorChart() {
                     max: 100,
                     grid:  { color: 'rgba(100, 120, 180, 0.08)' },
                     title: { display: true, text: 'Relative Risk Contribution %', color: '#64748b' },
+                }
+            }
+        }
+    });
+}
+
+// ─── EPC Distribution by Region ───
+function renderEPCChart() {
+    const canvas = document.getElementById('epc-chart');
+    if (!canvas || !dashboardData.epc || !dashboardData.epc.by_region) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (charts.epc) charts.epc.destroy();
+
+    const epcByRegion = dashboardData.epc.by_region;
+    const regions = Object.keys(epcByRegion).sort();
+    
+    // EPC rating labels and colors (1-7, where 7=A/best, 1=G/worst)
+    const ratingLabels = {
+        7: 'A (7)',
+        6: 'B (6)',
+        5: 'C (5)',
+        4: 'D (4)',
+        3: 'E (3)',
+        2: 'F (2)',
+        1: 'G (1)',
+    };
+    
+    const ratingColors = {
+        7: '#10b981',   // A - Green
+        6: '#06b6d4',   // B - Cyan
+        5: '#6366f1',   // C - Indigo
+        4: '#f59e0b',   // D - Amber
+        3: '#ef4444',   // E - Red
+        2: '#dc2626',   // F - Dark Red
+        1: '#7f1d1d',   // G - Very Dark Red
+    };
+
+    // Build datasets for each rating (1-7)
+    const datasets = [];
+    for (let rating = 7; rating >= 1; rating--) {
+        datasets.push({
+            label: ratingLabels[rating],
+            data: regions.map(region => epcByRegion[region][rating] || 0),
+            backgroundColor: ratingColors[rating],
+            borderColor: ratingColors[rating],
+            borderWidth: 0,
+        });
+    }
+
+    charts.epc = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: regions.map(r => r.replace(' Region', '').substring(0, 12)), // Shorten labels
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { 
+                        boxWidth: 14, 
+                        padding: 15, 
+                        font: { size: 11, weight: '500' },
+                        usePointStyle: false,
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    borderColor: 'rgba(100, 120, 180, 0.3)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const count = context.parsed.y.toLocaleString();
+                            return context.dataset.label + ': ' + count + ' buildings';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: { display: false },
+                    ticks: { font: { size: 10 } }
+                },
+                y: {
+                    stacked: true,
+                    grid: { color: 'rgba(100, 120, 180, 0.08)' },
+                    ticks: { font: { size: 10 } },
                 }
             }
         }

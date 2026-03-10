@@ -10,8 +10,33 @@ import math
 from collections import defaultdict
 from datetime import datetime
 
+class SanitizedJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles Infinity and NaN values."""
+    def encode(self, o):
+        if isinstance(o, float):
+            if math.isinf(o) or math.isnan(o):
+                return 'null'
+        return super().encode(o)
+    
+    def iterencode(self, o, _one_shot=False):
+        """Encode object while handling special float values."""
+        for chunk in super().iterencode(o, _one_shot):
+            yield chunk
+
 DATA_DIR = "Data"
 OUTPUT_FILE = "dashboard_data.json"
+
+def sanitize_inf_nan(obj):
+    """Recursively sanitize Infinity and NaN values in nested structures."""
+    if isinstance(obj, dict):
+        return {k: sanitize_inf_nan(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_inf_nan(item) for item in obj]
+    elif isinstance(obj, float):
+        if math.isinf(obj) or math.isnan(obj):
+            return None
+        return obj
+    return obj
 
 # Regions that appear in both price data and repo data
 REGIONS = [
@@ -208,6 +233,108 @@ def load_deprivation():
 
     print(f"  Aggregated deprivation for {len(regional_deprivation)} regions")
     return regional_deprivation, la_data
+
+def load_epc():
+    """Load and aggregate EPC data by region and integer EPC rating (1-7)."""
+    print("Loading EPC data...")
+    filepath = f"{DATA_DIR}/AtomBank_Nationwide_EPC_Risk1.csv"
+    
+    epc_stats = defaultdict(lambda: {"count": 0, "total_bill": 0, "total_cost_per_sqm": 0})
+    regional_epc_stats = defaultdict(lambda: defaultdict(lambda: {"count": 0}))
+    
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                try:
+                    green_score = float(row["green_score"])
+                    total_bill = float(row["total_energy_bill"]) if row["total_energy_bill"] else None
+                    cost_per_sqm = float(row["energy_cost_per_sqm"]) if row["energy_cost_per_sqm"] else None
+                    postcode = row.get("POSTCODE", "").strip()
+                    
+                    if green_score is not None:
+                        # Bucket continuous score to integer rating (1-7)
+                        rating = int(round(green_score))
+                        rating = max(1, min(7, rating))  # Clamp to 1-7
+                        
+                        # Global stats
+                        epc_stats[rating]["count"] += 1
+                        if total_bill:
+                            epc_stats[rating]["total_bill"] += total_bill
+                        if cost_per_sqm:
+                            epc_stats[rating]["total_cost_per_sqm"] += cost_per_sqm
+                        
+                        # Regional stats
+                        if postcode:
+                            region = postcodeToRegion(postcode)
+                            if region:
+                                regional_epc_stats[region][rating]["count"] += 1
+                
+                except (ValueError, KeyError):
+                    continue
+        
+        # Calculate global averages and format for display
+        epc_data = {}
+        total_count = sum(s["count"] for s in epc_stats.values())
+        for rating in sorted(epc_stats.keys()):
+            stats = epc_stats[rating]
+            count = stats["count"]
+            epc_data[rating] = {
+                "count": count,
+                "percentage": round(count / total_count * 100, 2) if total_count > 0 else 0,
+                "avg_energy_bill": round(stats["total_bill"] / count, 2) if count > 0 else 0,
+                "avg_cost_per_sqm": round(stats["total_cost_per_sqm"] / count, 2) if count > 0 else 0,
+            }
+        
+        # Format regional data: region -> rating -> count
+        epc_by_region = {}
+        for region, rating_data in regional_epc_stats.items():
+            epc_by_region[region] = {}
+            for rating in sorted(rating_data.keys()):
+                epc_by_region[region][rating] = rating_data[rating]["count"]
+        
+        print(f"  Loaded EPC data for {total_count} properties across {len(epc_by_region)} regions (bucketed to 7 ratings)")
+        return epc_data, epc_by_region
+    except FileNotFoundError:
+        print(f"  Warning: EPC file not found at {filepath}")
+        return {}, {}
+
+def postcodeToRegion(postcode):
+    """Map UK postcode to region."""
+    if not postcode:
+        return None
+    
+    prefix = postcode[:2].upper()
+    
+    # North East
+    if prefix in ["NE", "SR", "DH"]:
+        return "North East"
+    # North West
+    elif prefix in ["LA", "M", "BL", "WN", "PR", "BB", "FY", "CH"]:
+        return "North West"
+    # Yorkshire and The Humber
+    elif prefix in ["YO", "HX", "HD", "OL", "SK", "DN", "LS", "S", "BD"]:
+        return "Yorkshire and The Humber"
+    # West Midlands
+    elif prefix in ["WV", "W", "DY", "B", "CV", "ST"]:
+        return "West Midlands Region"
+    # East Midlands
+    elif prefix in ["DE", "NG", "LE", "LN", "PE", "NN"]:
+        return "East Midlands"
+    # East of England
+    elif prefix in ["CB", "PE", "NR", "IP", "CO", "SS", "AL", "SG", "CM", "EN", "LU", "MK"]:
+        return "East of England"
+    # London
+    elif prefix in ["E", "EC", "N", "NC", "NW", "SE", "SW", "W", "WC", "EC"]:
+        return "London"
+    # South East
+    elif prefix in ["RH", "CR", "BR", "SE", "TN", "BN", "GU", "RG", "PO", "HP", "SL", "OX"]:
+        return "South East"
+    # South West
+    elif prefix in ["EX", "PL", "TR", "TQ", "TA", "BA", "DT", "SP", "GL", "SN", "BS"]:
+        return "South West"
+    
+    return None
 
 def risk_model(prices, repos, deprivation):
     """Compute lending risk scores per region using logistic regression fitted on repossessions."""
@@ -722,6 +849,7 @@ def main():
     prices, indices = load_uk_hpi()
     repos = load_repossessions()
     deprivation, la_data = load_deprivation()
+    epc_data, epc_by_region = load_epc()
 
     # Compute risk scores
     risk_results = risk_model(prices, repos, deprivation)
@@ -752,6 +880,7 @@ def main():
                 "UK-HPI-full-file-2025-12.csv",
                 "Repossession-2025-12.csv",
                 "IoD2025 Local Authority District Summaries",
+                "AtomBank_Nationwide_EPC_Risk1.csv",
             ],
             "regions": REGIONS,
             "scoring_regions": scoring_regions,
@@ -762,10 +891,18 @@ def main():
         "backtest": backtest,
         "capital_allocation": capital_allocation,
         "time_series": time_series,
+<<<<<<< HEAD
         "market_data": market_data
+=======
+        "epc": {
+            "global": epc_data,
+            "by_region": epc_by_region,
+        },
+>>>>>>> 8c868d2 (added EPC visual)
     }
 
     # Write JSON
+    output = sanitize_inf_nan(output)
     with open(OUTPUT_FILE, "w") as f:
         json.dump(output, f, indent=2, default=str)
 
