@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-03-09T12:11:20.049019",
+    "generated_at": "2026-03-09T17:29:09.551486",
     "data_sources": [
       "UK-HPI-full-file-2025-12.csv",
       "Repossession-2025-12.csv",
@@ -42,96 +42,78 @@
       "avg_repos_test": 25.18,
       "avg_repos_all": 34.83,
       "total_repos": 3971,
-      "avg_annual_hpi_change": 4.55,
-      "recent_hpi_trend": 3.22,
+      "avg_annual_hpi_change": 4.0,
+      "recent_hpi_trend": 3.27,
       "deprivation_score": 0.5,
       "latest_price": 243632.0,
-      "norm_repos": 0.2461,
-      "norm_hpi_risk": 0.445,
-      "norm_deprivation": 0.0,
-      "risk_score": 0.2319,
-      "opportunity_score": 0.7681,
-      "risk_rank": 8
+      "risk_score": 0.4121,
+      "opportunity_score": 0.5879,
+      "risk_rank": 5
     },
     "East of England": {
       "avg_repos_train": 12.53,
       "avg_repos_test": 10.5,
       "avg_repos_all": 11.92,
       "total_repos": 1359,
-      "avg_annual_hpi_change": 3.38,
-      "recent_hpi_trend": 2.03,
+      "avg_annual_hpi_change": 4.24,
+      "recent_hpi_trend": 2.09,
       "deprivation_score": 0.5,
       "latest_price": 338002.0,
-      "norm_repos": 0.0,
-      "norm_hpi_risk": 0.7237,
-      "norm_deprivation": 0.0,
-      "risk_score": 0.2171,
-      "opportunity_score": 0.7829,
-      "risk_rank": 9
+      "risk_score": 0.2648,
+      "opportunity_score": 0.7352,
+      "risk_rank": 6
     },
     "London": {
       "avg_repos_train": 40.01,
       "avg_repos_test": 46.29,
       "avg_repos_all": 41.89,
       "total_repos": 4775,
-      "avg_annual_hpi_change": 1.84,
-      "recent_hpi_trend": 1.22,
+      "avg_annual_hpi_change": 4.67,
+      "recent_hpi_trend": 0.78,
       "deprivation_score": 0.6233,
       "latest_price": 551294.0,
-      "norm_repos": 0.3219,
-      "norm_hpi_risk": 0.9133,
-      "norm_deprivation": 0.4397,
-      "risk_score": 0.5347,
-      "opportunity_score": 0.4653,
-      "risk_rank": 4
+      "risk_score": 0.1642,
+      "opportunity_score": 0.8358,
+      "risk_rank": 9
     },
     "North East": {
       "avg_repos_train": 72.51,
       "avg_repos_test": 59.38,
       "avg_repos_all": 68.6,
       "total_repos": 7820,
-      "avg_annual_hpi_change": 3.44,
-      "recent_hpi_trend": 5.12,
+      "avg_annual_hpi_change": 2.2,
+      "recent_hpi_trend": 5.47,
       "deprivation_score": 0.7628,
       "latest_price": 165257.0,
-      "norm_repos": 0.6087,
-      "norm_hpi_risk": 0.0,
-      "norm_deprivation": 0.9372,
-      "risk_score": 0.5247,
-      "opportunity_score": 0.4753,
-      "risk_rank": 5
+      "risk_score": 0.7995,
+      "opportunity_score": 0.2005,
+      "risk_rank": 1
     },
     "North West": {
       "avg_repos_train": 117.91,
       "avg_repos_test": 74.71,
       "avg_repos_all": 105.03,
       "total_repos": 11973,
-      "avg_annual_hpi_change": 5.09,
-      "recent_hpi_trend": 4.52,
+      "avg_annual_hpi_change": 3.65,
+      "recent_hpi_trend": 4.6,
       "deprivation_score": 0.7563,
       "latest_price": 217428.0,
-      "norm_repos": 1.0,
-      "norm_hpi_risk": 0.1405,
-      "norm_deprivation": 0.9141,
-      "risk_score": 0.7164,
-      "opportunity_score": 0.2836,
-      "risk_rank": 1
+      "risk_score": 0.7118,
+      "opportunity_score": 0.2882,
+      "risk_rank": 2
     },
     "South East": {
       "avg_repos_train": 52.84,
       "avg_repos_test": 49.06,
       "avg_repos_all": 51.71,
       "total_repos": 5895,
-      "avg_annual_hpi_change": 3.02,
-      "recent_hpi_trend": 2.05,
+      "avg_annual_hpi_change": 4.11,
+      "recent_hpi_trend": 1.83,
       "deprivation_score": 0.5,
       "latest_price": 378800.0,
-      "norm_repos": 0.4273,
-      "norm_hpi_risk": 0.719,
-      "norm_deprivation": 0.0,
-      "risk_score": 0.3866,
-      "opportunity_score": 0.6134,
-      "risk_rank": 6
+      "risk_score": 0.2315,
+      "opportunity_score": 0.7685,
+      "risk_rank": 7
     },
     "South West": {
       "avg_repos_train": 34.49,
@@ -139,47 +121,38 @@
       "avg_repos_all": 30.95,
       "total_repos": 3528,
       "avg_annual_hpi_change": 3.65,
-      "recent_hpi_trend": 0.85,
+      "recent_hpi_trend": 0.88,
       "deprivation_score": 0.5,
       "latest_price": 301226.0,
-      "norm_repos": 0.2044,
-      "norm_hpi_risk": 1.0,
-      "norm_deprivation": 0.0,
-      "risk_score": 0.3818,
-      "opportunity_score": 0.6182,
-      "risk_rank": 7
+      "risk_score": 0.184,
+      "opportunity_score": 0.816,
+      "risk_rank": 8
     },
     "West Midlands Region": {
       "avg_repos_train": 49.26,
       "avg_repos_test": 30.88,
       "avg_repos_all": 43.78,
       "total_repos": 4991,
-      "avg_annual_hpi_change": 4.58,
-      "recent_hpi_trend": 3.5,
+      "avg_annual_hpi_change": 3.82,
+      "recent_hpi_trend": 3.32,
       "deprivation_score": 0.7804,
       "latest_price": 246141.0,
-      "norm_repos": 0.3422,
-      "norm_hpi_risk": 0.3794,
-      "norm_deprivation": 1.0,
-      "risk_score": 0.5507,
-      "opportunity_score": 0.4493,
-      "risk_rank": 3
+      "risk_score": 0.5891,
+      "opportunity_score": 0.4109,
+      "risk_rank": 4
     },
     "Yorkshire and The Humber": {
       "avg_repos_train": 77.11,
       "avg_repos_test": 48.47,
       "avg_repos_all": 68.57,
       "total_repos": 7817,
-      "avg_annual_hpi_change": 4.35,
-      "recent_hpi_trend": 3.85,
+      "avg_annual_hpi_change": 3.33,
+      "recent_hpi_trend": 3.72,
       "deprivation_score": 0.7774,
       "latest_price": 208447.0,
-      "norm_repos": 0.6084,
-      "norm_hpi_risk": 0.2974,
-      "norm_deprivation": 0.9893,
-      "risk_score": 0.6294,
-      "opportunity_score": 0.3706,
-      "risk_rank": 2
+      "risk_score": 0.6428,
+      "opportunity_score": 0.3572,
+      "risk_rank": 3
     }
   },
   "deprivation": {
@@ -228,83 +201,83 @@
     "train_period": "2016-05-01 to 2022-12-01",
     "test_period": "2023-01-01 to 2025-10-01",
     "spearman_train_vs_test": 0.9333,
-    "spearman_risk_vs_test": 0.7167,
+    "spearman_risk_vs_test": 0.5667,
     "regions": {
       "East Midlands": {
         "train_avg_repos": 38.94,
         "test_avg_repos": 25.18,
         "train_rank": 7,
         "test_rank": 7,
-        "risk_rank": 8
+        "risk_rank": 5
       },
       "East of England": {
         "train_avg_repos": 12.53,
         "test_avg_repos": 10.5,
         "train_rank": 9,
         "test_rank": 9,
-        "risk_rank": 9
+        "risk_rank": 6
       },
       "London": {
         "train_avg_repos": 40.01,
         "test_avg_repos": 46.29,
         "train_rank": 6,
         "test_rank": 5,
-        "risk_rank": 4
+        "risk_rank": 9
       },
       "North East": {
         "train_avg_repos": 72.51,
         "test_avg_repos": 59.38,
         "train_rank": 3,
         "test_rank": 2,
-        "risk_rank": 5
+        "risk_rank": 1
       },
       "North West": {
         "train_avg_repos": 117.91,
         "test_avg_repos": 74.71,
         "train_rank": 1,
         "test_rank": 1,
-        "risk_rank": 1
+        "risk_rank": 2
       },
       "South East": {
         "train_avg_repos": 52.84,
         "test_avg_repos": 49.06,
         "train_rank": 4,
         "test_rank": 3,
-        "risk_rank": 6
+        "risk_rank": 7
       },
       "South West": {
         "train_avg_repos": 34.49,
         "test_avg_repos": 22.62,
         "train_rank": 8,
         "test_rank": 8,
-        "risk_rank": 7
+        "risk_rank": 8
       },
       "West Midlands Region": {
         "train_avg_repos": 49.26,
         "test_avg_repos": 30.88,
         "train_rank": 5,
         "test_rank": 6,
-        "risk_rank": 3
+        "risk_rank": 4
       },
       "Yorkshire and The Humber": {
         "train_avg_repos": 77.11,
         "test_avg_repos": 48.47,
         "train_rank": 2,
         "test_rank": 4,
-        "risk_rank": 2
+        "risk_rank": 3
       }
     }
   },
   "capital_allocation": {
-    "East Midlands": 15.91,
-    "East of England": 16.22,
-    "London": 9.64,
-    "North East": 9.85,
-    "North West": 5.88,
-    "South East": 12.71,
-    "South West": 12.81,
-    "West Midlands Region": 9.31,
-    "Yorkshire and The Humber": 7.68
+    "East Midlands": 11.76,
+    "East of England": 14.7,
+    "London": 16.72,
+    "North East": 4.01,
+    "North West": 5.76,
+    "South East": 15.37,
+    "South West": 16.32,
+    "West Midlands Region": 8.22,
+    "Yorkshire and The Humber": 7.14
   },
   "time_series": {
     "price_dates": [
