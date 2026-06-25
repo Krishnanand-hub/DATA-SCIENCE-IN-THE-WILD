@@ -1,3 +1,8 @@
+<p align="center">
+  <a href="https://github.com/JosephHall978/DataScienceInTheWild">
+    <img src="image.png" alt="Nucleus Modelling" width="600">
+  </a>
+</p>
 # UK Lending Risk Dashboard
 
 An interactive analytics dashboard that estimates **regional mortgage-lending risk** across England and Wales by combining house-price, repossession, deprivation, energy-efficiency (EPC) and market data into a single risk view — including a live **Expected Credit Loss (ECL = PD × EAD × LGD)** calculator driven by UK postcodes.
